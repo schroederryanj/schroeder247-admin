@@ -25,7 +25,7 @@ return new class extends Migration
             $table->boolean('ssl_check')->default(false);
             $table->boolean('enabled')->default(true);
             $table->timestamp('last_checked_at')->nullable();
-            $table->enum('current_status', ['up', 'down', 'warning'])->default('up');
+            $table->string('current_status', 20)->nullable()->default('unknown');
             $table->timestamps();
         });
     }
