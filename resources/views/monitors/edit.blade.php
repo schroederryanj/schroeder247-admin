@@ -28,10 +28,10 @@
 
                         <div>
                             <x-input-label for="url" :value="__('URL or IP Address')" />
-                            <x-text-input id="url" class="block mt-1 w-full" type="url" name="url" 
+                            <x-text-input id="url" class="block mt-1 w-full" type="text" name="url" 
                                          :value="old('url', $monitor->url)" required />
                             <x-input-error :messages="$errors->get('url')" class="mt-2" />
-                            <p class="text-sm text-gray-600 mt-1">Enter the full URL (e.g., https://example.com) or IP address</p>
+                            <p class="text-sm text-gray-600 mt-1">Enter the full URL (e.g., https://example.com) or IP address (e.g., 192.168.1.1)</p>
                         </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">

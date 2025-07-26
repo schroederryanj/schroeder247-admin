@@ -27,7 +27,24 @@ class MonitorController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'url' => 'required|url|max:500',
+            'url' => ['required', 'string', 'max:500', function ($attribute, $value, $fail) {
+                // Check if it's a valid URL
+                if (filter_var($value, FILTER_VALIDATE_URL)) {
+                    return;
+                }
+                
+                // Check if it's a valid IP address (v4 or v6)
+                if (filter_var($value, FILTER_VALIDATE_IP)) {
+                    return;
+                }
+                
+                // Check if it's a domain name without protocol
+                if (preg_match('/^([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}$/i', $value)) {
+                    return;
+                }
+                
+                $fail('The ' . $attribute . ' must be a valid URL, IP address, or domain name.');
+            }],
             'type' => ['required', Rule::in(['http', 'https', 'ping', 'tcp'])],
             'check_interval' => 'required|integer|min:1|max:1440',
             'expected_status_code' => 'nullable|integer|min:100|max:599',
@@ -77,7 +94,24 @@ class MonitorController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'url' => 'required|url|max:500',
+            'url' => ['required', 'string', 'max:500', function ($attribute, $value, $fail) {
+                // Check if it's a valid URL
+                if (filter_var($value, FILTER_VALIDATE_URL)) {
+                    return;
+                }
+                
+                // Check if it's a valid IP address (v4 or v6)
+                if (filter_var($value, FILTER_VALIDATE_IP)) {
+                    return;
+                }
+                
+                // Check if it's a domain name without protocol
+                if (preg_match('/^([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}$/i', $value)) {
+                    return;
+                }
+                
+                $fail('The ' . $attribute . ' must be a valid URL, IP address, or domain name.');
+            }],
             'type' => ['required', Rule::in(['http', 'https', 'ping', 'tcp'])],
             'check_interval' => 'required|integer|min:1|max:1440',
             'expected_status_code' => 'nullable|integer|min:100|max:599',
