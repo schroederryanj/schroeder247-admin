@@ -69,6 +69,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | OpenAI API Key
+    |--------------------------------------------------------------------------
+    |
+    | Your OpenAI API key for AI assistant functionality. This is used to
+    | power the intelligent SMS responses and chat features.
+    |
+    */
+
+    'openai_api_key' => env('OPENAI_API_KEY'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Locale Configuration
     |--------------------------------------------------------------------------
     |
