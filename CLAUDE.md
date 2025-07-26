@@ -109,3 +109,23 @@ The project is set up for concurrent development with the `composer run dev` com
 ### Database Operations
 - `php artisan migrate` - Run database migrations
 - `php artisan db:seed --class=AdminUserSeeder` - Seed admin user
+
+## Deployment Information
+
+### Cloudways Configuration
+- **Production URL**: https://admin.schroeder247.com
+- **Server Path**: /home/master/applications/zgrjnvnece/public_html
+- **API Credentials**:
+  - API Key: `Cm5jQnspi9WYcYNVEGM6ZIRsj1zbVJ`
+  - Email: `tech@vhdental.com`
+  - Server ID: `1494122`
+  - App ID: `5724401`
+
+### Required Cron Job
+Add this to Cloudways Cron Job Management:
+```bash
+* * * * * cd /home/master/applications/zgrjnvnece/public_html && php artisan schedule:run >> /dev/null 2>&1
+```
+
+### Queue Worker Setup
+Supervisor configuration needed for queue processing (monitors and SMS)

@@ -14,7 +14,8 @@
       "Bash(gh pr merge:*)",
       "Bash(git stash:*)",
       "Bash(mkdir:*)",
-      "Bash(git pull:*)"
+      "Bash(git pull:*)",
+      "Bash(php:*)"
     ],
     "deny": []
   }

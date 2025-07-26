@@ -1,0 +1,8 @@
+# Alternative: Queue Worker via Cron (if supervisor is not available)
+# Add these lines to your Cloudways Cron Job Management:
+
+# Run queue worker every minute (processes up to 10 jobs then exits)
+* * * * * cd /home/master/applications/zgrjnvnece/public_html && php artisan queue:work --stop-when-empty --max-jobs=10 --timeout=180 >> storage/logs/queue-cron.log 2>&1
+
+# Restart queue worker every hour to prevent memory issues
+0 * * * * cd /home/master/applications/zgrjnvnece/public_html && php artisan queue:restart >> storage/logs/queue-cron.log 2>&1
