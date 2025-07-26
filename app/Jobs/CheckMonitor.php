@@ -335,13 +335,44 @@ class CheckMonitor implements ShouldQueue
 
     private function sendEmailAlert(string $status): void
     {
-        // TODO: Implement email notifications
-        // This would use Laravel's mail system to send email alerts
-        Log::info('Email notification would be sent here', [
-            'monitor_id' => $this->monitor->id,
-            'email' => $this->monitor->notification_email,
-            'status' => $status
-        ]);
+        try {
+            $statusEmoji = $status === 'down' ? '❌' : '⚠️';
+            $statusText = strtoupper($status);
+            
+            $subject = "{$statusEmoji} ALERT: {$this->monitor->name} is {$statusText}";
+            
+            $message = "Monitor Alert\n\n";
+            $message .= "Monitor: {$this->monitor->name}\n";
+            $message .= "Status: {$statusText}\n";
+            $message .= "URL: {$this->monitor->url}\n";
+            $message .= "Type: " . strtoupper($this->monitor->type) . "\n";
+            $message .= "Time: " . now()->format('M j, Y H:i T') . "\n\n";
+            $message .= "Check your dashboard for more details:\n";
+            $message .= config('app.url') . "/monitors/{$this->monitor->id}\n\n";
+            $message .= "This is an automated alert from your monitoring system.";
+
+            // Send email using Laravel's Mail facade
+            \Illuminate\Support\Facades\Mail::raw($message, function ($mail) use ($subject) {
+                $mail->to($this->monitor->notification_email)
+                     ->subject($subject)
+                     ->from(config('mail.from.address', 'noreply@' . \parse_url(config('app.url'), PHP_URL_HOST)), 
+                            config('mail.from.name', 'Monitor System'));
+            });
+
+            Log::info('Email alert sent', [
+                'monitor_id' => $this->monitor->id,
+                'email' => $this->monitor->notification_email,
+                'status' => $status,
+                'subject' => $subject
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to send email alert', [
+                'monitor_id' => $this->monitor->id,
+                'email' => $this->monitor->notification_email,
+                'error' => $e->getMessage()
+            ]);
+        }
     }
 
     /**

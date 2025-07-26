@@ -222,3 +222,48 @@ Route::get('/list-monitors', function() {
         })
     ]);
 })->name('list.monitors');
+
+// Test email configuration (secured with secret)
+Route::get('/test-email', function() {
+    $secret = request()->query('secret');
+    if ($secret !== config('app.deploy_secret')) {
+        abort(403);
+    }
+    
+    $to = request()->query('to', 'test@example.com');
+    
+    try {
+        \Illuminate\Support\Facades\Mail::raw('This is a test email from your monitor system.', function ($mail) use ($to) {
+            $mail->to($to)
+                 ->subject('Test Email from Monitor System')
+                 ->from(config('mail.from.address', 'noreply@' . \parse_url(config('app.url'), PHP_URL_HOST)), 
+                        config('mail.from.name', 'Monitor System'));
+        });
+        
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Test email sent successfully',
+            'to' => $to,
+            'mail_driver' => config('mail.default'),
+            'mail_config' => [
+                'host' => config('mail.mailers.smtp.host'),
+                'port' => config('mail.mailers.smtp.port'),
+                'from_address' => config('mail.from.address'),
+                'from_name' => config('mail.from.name'),
+            ]
+        ]);
+        
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Failed to send test email: ' . $e->getMessage(),
+            'mail_driver' => config('mail.default'),
+            'mail_config' => [
+                'host' => config('mail.mailers.smtp.host'),
+                'port' => config('mail.mailers.smtp.port'),
+                'from_address' => config('mail.from.address'),
+                'from_name' => config('mail.from.name'),
+            ]
+        ], 500);
+    }
+})->name('test.email');
