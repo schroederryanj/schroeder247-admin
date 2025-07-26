@@ -179,6 +179,9 @@ Route::get('/list-monitors', function() {
                 'last_checked_at' => $monitor->last_checked_at,
                 'check_interval' => $monitor->check_interval,
                 'results_count' => $monitor->results->count(),
+                'sms_notifications' => $monitor->sms_notifications,
+                'notification_phone' => $monitor->notification_phone,
+                'notification_threshold' => $monitor->notification_threshold,
                 'latest_result' => $monitor->results->sortByDesc('checked_at')->first() ? [
                     'status' => $monitor->results->sortByDesc('checked_at')->first()->status,
                     'checked_at' => $monitor->results->sortByDesc('checked_at')->first()->checked_at,
