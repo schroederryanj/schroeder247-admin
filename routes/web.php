@@ -24,8 +24,8 @@ Route::middleware('auth')->group(function () {
     
     Route::resource('monitors', MonitorController::class);
     
-    // Manual monitor check
-    Route::post('/monitors/{monitor}/check', [MonitorController::class, 'manualCheck'])->name('monitors.check');
+    // Check all monitors
+    Route::post('/monitors/check-all', [MonitorController::class, 'checkAll'])->name('monitors.check-all');
 });
 
 require __DIR__.'/auth.php';

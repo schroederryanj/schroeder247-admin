@@ -4,10 +4,19 @@
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 {{ __('Monitors') }}
             </h2>
-            <a href="{{ route('monitors.create') }}" 
-               class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                Add Monitor
-            </a>
+            <div class="flex space-x-2">
+                <form action="{{ route('monitors.check-all') }}" method="POST" class="inline">
+                    @csrf
+                    <button type="submit" 
+                            class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                        Check All Monitors
+                    </button>
+                </form>
+                <a href="{{ route('monitors.create') }}" 
+                   class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                    Add Monitor
+                </a>
+            </div>
         </div>
     </x-slot>
 
@@ -80,18 +89,11 @@
                                         <span>Avg: {{ $monitor->average_response_time }}ms</span>
                                     </div>
                                     
-                                    <div class="flex space-x-1">
+                                    <div class="flex space-x-2">
                                         <a href="{{ route('monitors.show', $monitor) }}" 
                                            class="flex-1 bg-blue-500 hover:bg-blue-700 text-white text-center py-1 px-2 rounded text-sm">
                                             View
                                         </a>
-                                        <form action="{{ route('monitors.check', $monitor) }}" method="POST" class="flex-1">
-                                            @csrf
-                                            <button type="submit" 
-                                                    class="w-full bg-green-500 hover:bg-green-700 text-white py-1 px-2 rounded text-sm">
-                                                Check
-                                            </button>
-                                        </form>
                                         <a href="{{ route('monitors.edit', $monitor) }}" 
                                            class="flex-1 bg-gray-500 hover:bg-gray-700 text-white text-center py-1 px-2 rounded text-sm">
                                             Edit

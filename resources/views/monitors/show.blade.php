@@ -5,11 +5,11 @@
                 {{ $monitor->name }}
             </h2>
             <div class="flex space-x-2">
-                <form action="{{ route('monitors.check', $monitor) }}" method="POST" class="inline">
+                <form action="{{ route('monitors.check-all') }}" method="POST" class="inline">
                     @csrf
                     <button type="submit" 
                             class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
-                        Check Now
+                        Check All Monitors
                     </button>
                 </form>
                 <a href="{{ route('monitors.edit', $monitor) }}" 

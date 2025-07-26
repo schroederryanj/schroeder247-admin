@@ -158,42 +158,25 @@ class MonitorController extends Controller
             ->with('success', 'Monitor deleted successfully!');
     }
 
-    public function manualCheck(Monitor $monitor)
+    public function checkAll()
     {
-        // Check if the monitor belongs to the authenticated user
-        if ($monitor->user_id !== Auth::id()) {
-            abort(403);
-        }
-
         try {
-            // Run the check synchronously
-            $job = new \App\Jobs\CheckMonitor($monitor);
-            $job->handle();
-
-            // Get the latest result to show the outcome
-            $latestResult = $monitor->results()->latest('checked_at')->first();
+            // Run the check-all command which handles all enabled monitors
+            \Illuminate\Support\Facades\Artisan::call('monitors:check-all');
             
-            if ($latestResult) {
-                $status = $latestResult->status;
-                $responseTime = $latestResult->response_time ? $latestResult->response_time . 'ms' : 'N/A';
-                
-                if ($status === 'up') {
-                    $message = "✅ Check completed! Monitor is UP (Response: {$responseTime})";
-                    $alertType = 'success';
-                } else {
-                    $errorMsg = $latestResult->error_message ? ': ' . $latestResult->error_message : '';
-                    $message = "❌ Check completed! Monitor is {$status}{$errorMsg}";
-                    $alertType = 'error';
-                }
+            // Get count of user's enabled monitors
+            $userMonitorCount = Monitor::where('user_id', Auth::id())
+                ->where('enabled', true)
+                ->count();
+            
+            if ($userMonitorCount > 0) {
+                return back()->with('success', "✅ Checking {$userMonitorCount} monitor(s)! Results will appear shortly.");
             } else {
-                $message = "Check completed, but no results recorded.";
-                $alertType = 'warning';
+                return back()->with('warning', "⚠️ No enabled monitors found to check.");
             }
 
-            return back()->with($alertType, $message);
-
         } catch (\Exception $e) {
-            return back()->with('error', 'Failed to check monitor: ' . $e->getMessage());
+            return back()->with('error', 'Failed to trigger monitor checks: ' . $e->getMessage());
         }
     }
 }
