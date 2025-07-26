@@ -57,6 +57,55 @@ The project is set up for concurrent development with the `composer run dev` com
 - Vite dev server for hot module replacement
 
 ### Database
-- Uses SQLite for development (database/database.sqlite)
+- Uses MySQL for development (schroeder247_admin database)
 - Standard Laravel migration and seeding structure
-- User factory and seeder included
+- User factory and AdminUserSeeder included for seeding admin user
+
+## Application Features
+
+### Authentication System
+- Laravel Breeze authentication with email/password login
+- Public registration is disabled - admin-only user creation
+- Admin user seeded: ryan@schroeder247.com / Changeme01!!!
+
+### Monitor Management System
+- Full CRUD operations for website/server monitors
+- Support for HTTP/HTTPS, Ping, and TCP port monitoring
+- Configurable check intervals, timeouts, and expected responses
+- SSL certificate validation for HTTPS monitors
+- Content verification for web pages
+- User-specific monitors with authorization policies
+
+### SMS Integration & AI Assistant
+- Twilio webhook integration for bidirectional SMS
+- AI assistant powered by OpenAI API for general queries
+- System status queries directly from SMS (no API calls needed)
+- Conversation history tracking in database
+- Background job processing for SMS responses
+
+### Queue System
+- Redis-based queue processing for background jobs
+- CheckMonitor job for individual monitor checks
+- ProcessIncomingSMS job for AI responses
+- Console command: `php artisan monitors:check-all`
+
+### Dashboard
+- Mobile-first responsive design
+- Real-time monitor status overview
+- Recent SMS conversation display
+- Quick action buttons for common tasks
+
+## Key Commands
+
+### Monitoring System
+- `php artisan monitors:check-all` - Check all enabled monitors and dispatch jobs
+- Monitor checks run via CheckMonitor job dispatched from command
+- Results stored in monitor_results table
+
+### Queue Processing
+- `php artisan queue:work` - Process queued jobs (included in dev command)
+- Used for monitor checks and SMS processing
+
+### Database Operations
+- `php artisan migrate` - Run database migrations
+- `php artisan db:seed --class=AdminUserSeeder` - Seed admin user
