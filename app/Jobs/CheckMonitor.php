@@ -349,7 +349,7 @@ class CheckMonitor implements ShouldQueue
      */
     private function execCommand(string $command, array &$output = null, int &$returnCode = null): string
     {
-        return exec($command, $output, $returnCode);
+        return \exec($command, $output, $returnCode);
     }
 
     /**
@@ -357,6 +357,6 @@ class CheckMonitor implements ShouldQueue
      */
     private function escapeShellArg(string $arg): string
     {
-        return escapeshellarg($arg);
+        return \escapeshellarg($arg);
     }
 }

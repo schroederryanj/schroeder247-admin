@@ -65,11 +65,11 @@ class MonitorController extends Controller
 
         $monitor = Monitor::create($validated);
 
-        // Immediately check the monitor to get initial status
-        \App\Jobs\CheckMonitor::dispatchSync($monitor);
+        // Note: Initial check will happen automatically via cron job
+        // Removed immediate check to avoid namespace issues during creation
 
         return redirect()->route('monitors.index')
-            ->with('success', 'Monitor created successfully!');
+            ->with('success', 'Monitor created successfully! First check will happen within a few minutes.');
     }
 
     public function show(Monitor $monitor)
