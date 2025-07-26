@@ -41,13 +41,21 @@ class CheckAllMonitors extends Command
             $checkInterval = $monitor->check_interval;
 
             if (!$lastChecked || $lastChecked->addMinutes($checkInterval)->isPast()) {
-                CheckMonitor::dispatch($monitor);
-                $dispatchCount++;
-                
-                $this->line("Dispatched check for: {$monitor->name}");
+                try {
+                    // Run synchronously instead of dispatching to queue to avoid queue issues
+                    $job = new CheckMonitor($monitor);
+                    $job->handle();
+                    $dispatchCount++;
+                    
+                    $this->line("✓ Checked: {$monitor->name} ({$monitor->type})");
+                } catch (\Exception $e) {
+                    $this->error("✗ Failed to check {$monitor->name}: " . $e->getMessage());
+                }
+            } else {
+                $this->line("- Skipped: {$monitor->name} (checked recently)");
             }
         }
 
-        $this->info("Dispatched {$dispatchCount} monitor checks out of {$monitors->count()} enabled monitors.");
+        $this->info("Completed {$dispatchCount} monitor checks out of {$monitors->count()} enabled monitors.");
     }
 }
