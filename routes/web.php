@@ -27,6 +27,26 @@ Route::middleware('auth')->group(function () {
 
 require __DIR__.'/auth.php';
 
-// SMS webhook endpoints (moved from API routes due to server config)
-Route::get('/sms/test', [SMSController::class, 'test'])->name('sms.test');
+// Simple test route to debug routing issues
+Route::get('/test-simple', function () {
+    return response()->json([
+        'status' => 'success',
+        'message' => 'Simple route works',
+        'timestamp' => now(),
+        'app_url' => config('app.url')
+    ]);
+});
+
+// SMS test route (simplified)
+Route::get('/sms/test', function () {
+    return response()->json([
+        'status' => 'success',
+        'message' => 'SMS webhook is reachable',
+        'timestamp' => now(),
+        'twilio_configured' => config('services.twilio.sid') ? 'Yes' : 'No',
+        'queue_driver' => config('queue.default')
+    ]);
+});
+
+// SMS webhook endpoint
 Route::post('/sms/webhook', [SMSController::class, 'handleIncomingMessage'])->name('sms.webhook');
