@@ -10,7 +10,7 @@ Route::get('/', function () {
     if (auth()->check()) {
         return redirect('/dashboard');
     }
-    return view('welcome');
+    return redirect('/login');
 });
 
 Route::get('/dashboard', [DashboardController::class, 'index'])
