@@ -71,7 +71,10 @@ class MonitorController extends Controller
 
     public function show(Monitor $monitor)
     {
-        $this->authorize('view', $monitor);
+        // Check if the monitor belongs to the authenticated user
+        if ($monitor->user_id !== Auth::id()) {
+            abort(403);
+        }
         
         $recentResults = $monitor->results()
             ->orderBy('checked_at', 'desc')
@@ -83,14 +86,20 @@ class MonitorController extends Controller
 
     public function edit(Monitor $monitor)
     {
-        $this->authorize('update', $monitor);
+        // Check if the monitor belongs to the authenticated user
+        if ($monitor->user_id !== Auth::id()) {
+            abort(403);
+        }
         
         return view('monitors.edit', compact('monitor'));
     }
 
     public function update(Request $request, Monitor $monitor)
     {
-        $this->authorize('update', $monitor);
+        // Check if the monitor belongs to the authenticated user
+        if ($monitor->user_id !== Auth::id()) {
+            abort(403);
+        }
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -135,7 +144,10 @@ class MonitorController extends Controller
 
     public function destroy(Monitor $monitor)
     {
-        $this->authorize('delete', $monitor);
+        // Check if the monitor belongs to the authenticated user
+        if ($monitor->user_id !== Auth::id()) {
+            abort(403);
+        }
         
         $monitor->delete();
 
