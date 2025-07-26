@@ -64,7 +64,7 @@ jobs:
             -d '{
               "server_id": "'"${CLOUDWAYS_SERVER_ID}"'",
               "app_id": "'"${CLOUDWAYS_APP_ID}"'",
-              "command": "cd /home/master_zgrjnvnece/applications/zgrjnvnece/public_html && php artisan '"$cmd"'"
+              "command": "cd /home/master_zgrjnvnece/applications/mkryvrcxkv/public_html && php artisan '"$cmd"'"
             }'
           sleep 2
         done

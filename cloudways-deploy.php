@@ -124,7 +124,7 @@ class CloudwaysAPI {
             $result = $this->request('POST', '/app/manage/ssh_cmd', [
                 'server_id' => $serverId,
                 'app_id' => $appId,
-                'command' => "cd /home/master_zgrjnvnece/applications/zgrjnvnece/public_html && php artisan {$command}"
+                'command' => "cd /home/master_zgrjnvnece/applications/mkryvrcxkv/public_html && php artisan {$command}"
             ]);
             
             if ($result['code'] === 200) {
