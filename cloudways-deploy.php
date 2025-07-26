@@ -92,6 +92,7 @@ class CloudwaysAPI {
         
         if ($result['code'] === 200) {
             echo "✓ Git pull initiated successfully\n";
+            echo "Response: " . json_encode($result['response']) . "\n";
             
             // Get operation ID to track progress
             $operationId = $result['response']['operation_id'] ?? null;
@@ -99,7 +100,7 @@ class CloudwaysAPI {
                 $this->trackOperation($serverId, $operationId);
             }
         } else {
-            echo "✗ Git pull failed: " . json_encode($result['response']) . "\n";
+            echo "✗ Git pull failed (HTTP {$result['code']}): " . json_encode($result['response']) . "\n";
         }
         
         return $result;
