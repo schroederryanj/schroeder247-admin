@@ -156,3 +156,35 @@ Route::get('/check-monitor/{id}', function($id) {
         ], 500);
     }
 })->name('check.monitor');
+
+// List all monitors (secured with secret)
+Route::get('/list-monitors', function() {
+    $secret = request()->query('secret');
+    if ($secret !== config('app.deploy_secret')) {
+        abort(403);
+    }
+    
+    $monitors = \App\Models\Monitor::with('results')->get();
+    
+    return response()->json([
+        'total_monitors' => $monitors->count(),
+        'monitors' => $monitors->map(function($monitor) {
+            return [
+                'id' => $monitor->id,
+                'name' => $monitor->name,
+                'url' => $monitor->url,
+                'type' => $monitor->type,
+                'enabled' => $monitor->enabled,
+                'current_status' => $monitor->current_status,
+                'last_checked_at' => $monitor->last_checked_at,
+                'check_interval' => $monitor->check_interval,
+                'results_count' => $monitor->results->count(),
+                'latest_result' => $monitor->results->sortByDesc('checked_at')->first() ? [
+                    'status' => $monitor->results->sortByDesc('checked_at')->first()->status,
+                    'checked_at' => $monitor->results->sortByDesc('checked_at')->first()->checked_at,
+                    'error_message' => $monitor->results->sortByDesc('checked_at')->first()->error_message,
+                ] : null
+            ];
+        })
+    ]);
+})->name('list.monitors');
