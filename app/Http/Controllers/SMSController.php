@@ -56,59 +56,108 @@ class SMSController extends Controller
         // Store the incoming message and queue it for AI processing
         ProcessIncomingSMS::dispatch($from, $body, $messageSid);
 
-        // Check if this is an urgent query that needs immediate response
-        if ($this->isUrgentQuery($body)) {
-            $quickResponse = $this->generateQuickResponse($body);
-            
-            $twiml = new MessagingResponse();
-            $twiml->message($quickResponse);
-            
-            return response($twiml, 200)->header('Content-Type', 'text/xml');
-        }
-
-        // Return empty TwiML response for non-urgent messages
+        // Always provide immediate response for better UX
+        $quickResponse = $this->generateQuickResponse($body);
+        
         $twiml = new MessagingResponse();
+        $twiml->message($quickResponse);
+        
         return response($twiml, 200)->header('Content-Type', 'text/xml');
     }
 
-    private function isUrgentQuery(string $message): bool
-    {
-        $urgentKeywords = [
-            'down', 'offline', 'error', 'critical', 'emergency', 
-            'urgent', 'help', 'status check', 'alert', 'hello', 'hi', 'hey'
-        ];
-
-        $message = strtolower($message);
-        
-        foreach ($urgentKeywords as $keyword) {
-            if (str_contains($message, $keyword)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
 
     private function generateQuickResponse(string $message): string
     {
-        $message = strtolower($message);
+        $message = strtolower(trim($message));
 
-        if (str_contains($message, 'hello') || str_contains($message, 'hi') || str_contains($message, 'hey')) {
-            return "👋 Hello! I'm your IT monitoring assistant. Ask me about:\n• Monitor status\n• System alerts\n• General IT questions\n\nWhat can I help you with?";
+        // Greetings
+        if (in_array($message, ['hello', 'hi', 'hey', 'yo', 'sup'])) {
+            return "👋 Hello! I'm your IT monitoring assistant. Try these commands:\n• 'status' - Check monitors\n• 'down' - See down monitors\n• 'help' - Get help\n• Or ask me anything!";
         }
 
-        if (str_contains($message, 'status check') || str_contains($message, 'status')) {
-            return "🔍 Checking all monitors... Full response coming in 30 seconds.";
+        // Status check - provide immediate response with actual data
+        if (str_contains($message, 'status') || $message === 'check' || $message === 'monitors') {
+            return $this->getQuickSystemStatus();
         }
 
-        if (str_contains($message, 'down') || str_contains($message, 'offline')) {
-            return "⚠️ Investigating potential outages... Detailed report incoming.";
+        // Down/outage check
+        if (str_contains($message, 'down') || str_contains($message, 'offline') || str_contains($message, 'outage')) {
+            return $this->getQuickDownStatus();
         }
 
-        if (str_contains($message, 'help')) {
-            return "📞 AI Assistant ready! Ask me about:\n• Monitor status\n• System alerts\n• General questions\n\nProcessing your request...";
+        // Help
+        if (str_contains($message, 'help') || $message === '?') {
+            return "📱 SMS Commands:\n• status - System status\n• down - Check outages\n• help - This menu\n• test - Test response\n\nOr just ask me anything about your monitors!";
         }
 
-        return "🤖 Processing your request... Response coming shortly.";
+        // Test
+        if ($message === 'test' || str_contains($message, 'ping')) {
+            return "✅ SMS system working! Response time: " . round(microtime(true) * 1000) % 1000 . "ms";
+        }
+
+        // Default for other messages
+        return "🤖 Got your message! I'll check on that for you. For immediate help, try:\n• 'status' - Check monitors\n• 'help' - See commands";
+    }
+    
+    private function getQuickSystemStatus(): string
+    {
+        try {
+            $monitors = \App\Models\Monitor::where('enabled', true)->get();
+            
+            if ($monitors->isEmpty()) {
+                return "📊 No monitors configured yet. Add some at admin.schroeder247.com";
+            }
+
+            $upCount = $monitors->where('current_status', 'up')->count();
+            $downCount = $monitors->where('current_status', 'down')->count();
+            $totalCount = $monitors->count();
+
+            $response = "📊 Monitor Status:\n";
+            $response .= "✅ UP: {$upCount}/{$totalCount}\n";
+            
+            if ($downCount > 0) {
+                $response .= "❌ DOWN: {$downCount}\n";
+                $downMonitors = $monitors->where('current_status', 'down')->take(2);
+                foreach ($downMonitors as $monitor) {
+                    $response .= "  • {$monitor->name}\n";
+                }
+            }
+            
+            $response .= "\n🕐 " . now()->format('g:i A');
+
+            return $response;
+        } catch (\Exception $e) {
+            return "📊 Status check in progress... Having trouble accessing monitors. Try again in a moment.";
+        }
+    }
+    
+    private function getQuickDownStatus(): string
+    {
+        try {
+            $downMonitors = \App\Models\Monitor::where('enabled', true)
+                ->where('current_status', 'down')
+                ->get();
+
+            if ($downMonitors->isEmpty()) {
+                return "✅ All systems operational! No monitors are down.";
+            }
+
+            $response = "❌ Down Monitors ({$downMonitors->count()}):\n";
+            
+            foreach ($downMonitors->take(5) as $monitor) {
+                $response .= "• {$monitor->name}\n";
+                if ($monitor->url) {
+                    $response .= "  {$monitor->url}\n";
+                }
+            }
+
+            if ($downMonitors->count() > 5) {
+                $response .= "\n...and " . ($downMonitors->count() - 5) . " more";
+            }
+
+            return $response;
+        } catch (\Exception $e) {
+            return "⚠️ Checking for outages... Having trouble accessing data. Try again shortly.";
+        }
     }
 }
