@@ -5,7 +5,7 @@
                 IT Admin Dashboard
             </h2>
             <div class="text-sm text-gray-500 dark:text-gray-400">
-                {{ now()->format('M j, Y') }} • Auto-Deploy ✓
+                {{ now()->format('M j, Y') }}
             </div>
         </div>
     </x-slot>

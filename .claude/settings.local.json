@@ -15,7 +15,8 @@
       "Bash(git stash:*)",
       "Bash(mkdir:*)",
       "Bash(git pull:*)",
-      "Bash(php:*)"
+      "Bash(php:*)",
+      "Bash(curl:*)"
     ],
     "deny": []
   }
