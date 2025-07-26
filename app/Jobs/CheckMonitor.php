@@ -26,7 +26,7 @@ class CheckMonitor implements ShouldQueue
             return;
         }
 
-        $startTime = microtime(true);
+        $startTime = \microtime(true);
         $result = [
             'monitor_id' => $this->monitor->id,
             'checked_at' => now(),
@@ -102,8 +102,8 @@ class CheckMonitor implements ShouldQueue
                 ])
                 ->get($this->monitor->url);
 
-            $endTime = microtime(true);
-            $result['response_time'] = round(($endTime - $startTime) * 1000);
+            $endTime = \microtime(true);
+            $result['response_time'] = \\round(($endTime - $startTime) * 1000);
             $result['status_code'] = $response->status();
 
             // Log the response for debugging
@@ -112,7 +112,7 @@ class CheckMonitor implements ShouldQueue
                 'url' => $this->monitor->url,
                 'status_code' => $response->status(),
                 'response_time' => $result['response_time'],
-                'content_length' => strlen($response->body()),
+                'content_length' => \strlen($response->body()),
                 'headers' => $response->headers()
             ]);
 
@@ -124,7 +124,7 @@ class CheckMonitor implements ShouldQueue
             }
 
             if ($this->monitor->expected_content) {
-                $contentOk = str_contains($response->body(), $this->monitor->expected_content);
+                $contentOk = \str_contains($response->body(), $this->monitor->expected_content);
             } else {
                 $contentOk = true;
             }
@@ -148,8 +148,8 @@ class CheckMonitor implements ShouldQueue
             }
 
         } catch (\Exception $e) {
-            $endTime = microtime(true);
-            $result['response_time'] = round(($endTime - $startTime) * 1000);
+            $endTime = \microtime(true);
+            $result['response_time'] = \\round(($endTime - $startTime) * 1000);
             $result['error_message'] = 'HTTP request failed: ' . $e->getMessage();
             
             Log::error('HTTP check failed', [
@@ -162,7 +162,7 @@ class CheckMonitor implements ShouldQueue
 
     private function checkPing(array &$result, float $startTime): void
     {
-        $host = parse_url($this->monitor->url, PHP_URL_HOST) ?: $this->monitor->url;
+        $host = \parse_url($this->monitor->url, PHP_URL_HOST) ?: $this->monitor->url;
         
         // Detect OS and use appropriate ping command
         if (PHP_OS_FAMILY === 'Windows') {
@@ -174,15 +174,15 @@ class CheckMonitor implements ShouldQueue
         
         $pingResult = \exec($pingCommand, $output, $returnCode);
         
-        $endTime = microtime(true);
-        $result['response_time'] = round(($endTime - $startTime) * 1000);
+        $endTime = \microtime(true);
+        $result['response_time'] = \\round(($endTime - $startTime) * 1000);
 
         if ($returnCode === 0) {
             $result['status'] = 'up';
             
             // Try to extract response time from ping output
-            if (preg_match('/time=(\d+\.?\d*)\s*ms/', implode("\n", $output), $matches)) {
-                $result['response_time'] = round(floatval($matches[1]));
+            if (\preg_match('/time=(\d+\.?\d*)\s*ms/', \implode("\n", $output), $matches)) {
+                $result['response_time'] = \round(\floatval($matches[1]));
             }
         } else {
             $result['error_message'] = 'Ping failed: host unreachable';
@@ -191,17 +191,17 @@ class CheckMonitor implements ShouldQueue
 
     private function checkTcp(array &$result, float $startTime): void
     {
-        $host = parse_url($this->monitor->url, PHP_URL_HOST) ?: $this->monitor->url;
+        $host = \parse_url($this->monitor->url, PHP_URL_HOST) ?: $this->monitor->url;
         $port = $this->monitor->port ?: 80;
 
-        $connection = @fsockopen($host, $port, $errno, $errstr, $this->monitor->timeout);
+        $connection = @\fsockopen($host, $port, $errno, $errstr, $this->monitor->timeout);
         
-        $endTime = microtime(true);
-        $result['response_time'] = round(($endTime - $startTime) * 1000);
+        $endTime = \microtime(true);
+        $result['response_time'] = \\round(($endTime - $startTime) * 1000);
 
         if ($connection) {
             $result['status'] = 'up';
-            fclose($connection);
+            \fclose($connection);
         } else {
             $result['error_message'] = "TCP connection failed: $errstr ($errno)";
         }
@@ -209,11 +209,11 @@ class CheckMonitor implements ShouldQueue
 
     private function checkSsl(string $url): bool
     {
-        $parsedUrl = parse_url($url);
+        $parsedUrl = \parse_url($url);
         $host = $parsedUrl['host'];
         $port = $parsedUrl['port'] ?? 443;
 
-        $context = stream_context_create([
+        $context = \stream_context_create([
             'ssl' => [
                 'capture_peer_cert' => true,
                 'verify_peer' => true,
@@ -221,7 +221,7 @@ class CheckMonitor implements ShouldQueue
             ]
         ]);
 
-        $socket = @stream_socket_client(
+        $socket = @\stream_socket_client(
             "ssl://{$host}:{$port}",
             $errno,
             $errstr,
@@ -234,17 +234,17 @@ class CheckMonitor implements ShouldQueue
             return false;
         }
 
-        $cert = stream_context_get_params($socket)['options']['ssl']['peer_certificate'];
-        fclose($socket);
+        $cert = \stream_context_get_params($socket)['options']['ssl']['peer_certificate'];
+        \fclose($socket);
 
         if (!$cert) {
             return false;
         }
 
-        $certInfo = openssl_x509_parse($cert);
+        $certInfo = \openssl_x509_parse($cert);
         $expiryDate = $certInfo['validTo_time_t'];
 
-        return $expiryDate > time() + (30 * 24 * 60 * 60);
+        return $expiryDate > \time() + (30 * 24 * 60 * 60);
     }
 
     private function checkNotifications(string $currentStatus): void
