@@ -53,11 +53,31 @@ class SMSController extends Controller
             'sid' => $messageSid
         ]);
 
-        // Store the incoming message and queue it for AI processing
-        ProcessIncomingSMS::dispatch($from, $body, $messageSid);
+        // Store the incoming message for history (queue processing disabled for now)
+        // TODO: Fix queue job processing or integrate AI responses directly
+        // ProcessIncomingSMS::dispatch($from, $body, $messageSid);
+        
+        // Log the conversation
+        \App\Models\SMSConversation::create([
+            'phone_number' => $from,
+            'message_type' => 'incoming',
+            'content' => $body,
+            'twilio_sid' => $messageSid,
+            'processed' => true,
+            'processed_at' => now()
+        ]);
 
         // Always provide immediate response for better UX
         $quickResponse = $this->generateQuickResponse($body);
+        
+        // Log the outgoing response
+        \App\Models\SMSConversation::create([
+            'phone_number' => $from,
+            'message_type' => 'outgoing',
+            'content' => $quickResponse,
+            'processed' => true,
+            'processed_at' => now()
+        ]);
         
         $twiml = new MessagingResponse();
         $twiml->message($quickResponse);
@@ -83,6 +103,17 @@ class SMSController extends Controller
         // Down/outage check
         if (str_contains($message, 'down') || str_contains($message, 'offline') || str_contains($message, 'outage')) {
             return $this->getQuickDownStatus();
+        }
+        
+        // Questions about which monitors are up
+        if ((str_contains($message, 'which') || str_contains($message, 'what')) && 
+            (str_contains($message, 'up') || str_contains($message, 'working') || str_contains($message, 'online'))) {
+            return $this->getUpMonitorsList();
+        }
+        
+        // Questions about monitors
+        if (str_contains($message, 'monitor') || str_contains($message, 'system')) {
+            return $this->getQuickSystemStatus();
         }
 
         // Help
@@ -158,6 +189,39 @@ class SMSController extends Controller
             return $response;
         } catch (\Exception $e) {
             return "⚠️ Checking for outages... Having trouble accessing data. Try again shortly.";
+        }
+    }
+    
+    private function getUpMonitorsList(): string
+    {
+        try {
+            $upMonitors = \App\Models\Monitor::where('enabled', true)
+                ->where('current_status', 'up')
+                ->get();
+
+            if ($upMonitors->isEmpty()) {
+                return "⚠️ No monitors are currently up.";
+            }
+
+            $response = "✅ Working Monitors ({$upMonitors->count()}):\n";
+            
+            foreach ($upMonitors->take(10) as $monitor) {
+                $response .= "• {$monitor->name}";
+                if ($monitor->average_response_time) {
+                    $response .= " ({$monitor->average_response_time}ms)";
+                }
+                $response .= "\n";
+            }
+
+            if ($upMonitors->count() > 10) {
+                $response .= "\n...and " . ($upMonitors->count() - 10) . " more";
+            }
+            
+            $response .= "\n🕐 " . now()->format('g:i A');
+
+            return $response;
+        } catch (\Exception $e) {
+            return "📊 Checking working monitors... Having trouble accessing data. Try again in a moment.";
         }
     }
 }
