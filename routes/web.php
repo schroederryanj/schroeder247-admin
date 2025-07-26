@@ -267,3 +267,36 @@ Route::get('/test-email', function() {
         ], 500);
     }
 })->name('test.email');
+
+// Simple mail config check (secured with secret)
+Route::get('/mail-config', function() {
+    $secret = request()->query('secret');
+    if ($secret !== config('app.deploy_secret')) {
+        abort(403);
+    }
+    
+    return response()->json([
+        'mail_driver' => config('mail.default'),
+        'smtp_config' => [
+            'host' => config('mail.mailers.smtp.host'),
+            'port' => config('mail.mailers.smtp.port'),
+            'username' => config('mail.mailers.smtp.username') ? 'SET' : 'NOT SET',
+            'password' => config('mail.mailers.smtp.password') ? 'SET' : 'NOT SET',
+            'encryption' => config('mail.mailers.smtp.encryption'),
+        ],
+        'from_config' => [
+            'address' => config('mail.from.address'),
+            'name' => config('mail.from.name'),
+        ],
+        'env_vars' => [
+            'MAIL_MAILER' => env('MAIL_MAILER'),
+            'MAIL_HOST' => env('MAIL_HOST') ? 'SET' : 'NOT SET',
+            'MAIL_PORT' => env('MAIL_PORT'),
+            'MAIL_USERNAME' => env('MAIL_USERNAME') ? 'SET' : 'NOT SET',
+            'MAIL_PASSWORD' => env('MAIL_PASSWORD') ? 'SET' : 'NOT SET',
+            'MAIL_ENCRYPTION' => env('MAIL_ENCRYPTION'),
+            'MAIL_FROM_ADDRESS' => env('MAIL_FROM_ADDRESS'),
+            'MAIL_FROM_NAME' => env('MAIL_FROM_NAME'),
+        ]
+    ]);
+})->name('mail.config');
