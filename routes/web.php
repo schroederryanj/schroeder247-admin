@@ -50,3 +50,6 @@ Route::get('/sms/test', function () {
 
 // SMS webhook endpoint
 Route::post('/sms/webhook', [SMSController::class, 'handleIncomingMessage'])->name('sms.webhook');
+
+// Deployment webhook (secured with secret)
+Route::post('/deploy', [\App\Http\Controllers\DeploymentController::class, 'deploy'])->name('deploy.webhook');

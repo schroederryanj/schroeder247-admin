@@ -81,6 +81,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Deployment Secret
+    |--------------------------------------------------------------------------
+    |
+    | This secret is used to secure the deployment webhook endpoint.
+    | Make sure to set this in your production environment.
+    |
+    */
+
+    'deploy_secret' => env('DEPLOY_SECRET', 'change-this-secret-in-production'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Locale Configuration
     |--------------------------------------------------------------------------
     |
