@@ -249,12 +249,70 @@ class CheckMonitor implements ShouldQueue
 
     private function checkNotifications(string $currentStatus): void
     {
-        // Only send notifications if monitor is down or has warnings
-        if ($currentStatus === 'up') {
+        $previousStatus = $this->monitor->current_status;
+        
+        // Case 1: Monitor just went down (or warning)
+        if ($currentStatus !== 'up' && $previousStatus === 'up') {
+            $this->sendDownNotification($currentStatus);
             return;
         }
+        
+        // Case 2: Monitor came back up (recovery notification)
+        if ($currentStatus === 'up' && $previousStatus !== 'up' && $previousStatus !== 'unknown') {
+            $this->sendRecoveryNotification();
+            return;
+        }
+        
+        // Case 3: Monitor is still down - check if we need to send repeat notifications
+        if ($currentStatus !== 'up') {
+            $this->checkRepeatNotifications($currentStatus);
+        }
+    }
 
-        // Check if enough consecutive failures have occurred
+    private function sendDownNotification(string $status): void
+    {
+        Log::info('Sending down notification', [
+            'monitor_id' => $this->monitor->id,
+            'status' => $status
+        ]);
+
+        // Send SMS notification if enabled
+        if ($this->monitor->sms_notifications && $this->monitor->notification_phone) {
+            $this->sendSMSAlert($status);
+        }
+
+        // Send Email notification if enabled
+        if ($this->monitor->email_notifications && $this->monitor->notification_email) {
+            $this->sendEmailAlert($status);
+        }
+
+        // Update last notification sent timestamp
+        $this->monitor->update(['last_notification_sent' => now()]);
+    }
+
+    private function sendRecoveryNotification(): void
+    {
+        Log::info('Sending recovery notification', [
+            'monitor_id' => $this->monitor->id
+        ]);
+
+        // Send SMS recovery notification if enabled
+        if ($this->monitor->sms_notifications && $this->monitor->notification_phone) {
+            $this->sendSMSRecoveryAlert();
+        }
+
+        // Send Email recovery notification if enabled
+        if ($this->monitor->email_notifications && $this->monitor->notification_email) {
+            $this->sendEmailRecoveryAlert();
+        }
+
+        // Update last notification sent timestamp
+        $this->monitor->update(['last_notification_sent' => now()]);
+    }
+
+    private function checkRepeatNotifications(string $status): void
+    {
+        // Check if enough consecutive failures have occurred for repeat notifications
         $recentFailures = $this->monitor->results()
             ->where('status', '!=', 'up')
             ->orderBy('checked_at', 'desc')
@@ -267,23 +325,26 @@ class CheckMonitor implements ShouldQueue
 
         // Don't spam notifications - check if we sent one recently
         $lastNotification = $this->monitor->last_notification_sent;
-        $notificationCooldown = 30; // 30 minutes between notifications
+        $notificationCooldown = 30; // 30 minutes between repeat notifications
 
         if ($lastNotification && $lastNotification->diffInMinutes(now()) < $notificationCooldown) {
             return;
         }
 
-        // Send SMS notification if enabled
+        Log::info('Sending repeat notification', [
+            'monitor_id' => $this->monitor->id,
+            'status' => $status
+        ]);
+
+        // Send repeat notifications
         if ($this->monitor->sms_notifications && $this->monitor->notification_phone) {
-            $this->sendSMSAlert($currentStatus);
+            $this->sendSMSAlert($status);
         }
 
-        // Send Email notification if enabled (placeholder for future implementation)
         if ($this->monitor->email_notifications && $this->monitor->notification_email) {
-            $this->sendEmailAlert($currentStatus);
+            $this->sendEmailAlert($status);
         }
 
-        // Update last notification sent timestamp
         $this->monitor->update(['last_notification_sent' => now()]);
     }
 
@@ -368,6 +429,87 @@ class CheckMonitor implements ShouldQueue
 
         } catch (\Exception $e) {
             Log::error('Failed to send email alert', [
+                'monitor_id' => $this->monitor->id,
+                'email' => $this->monitor->notification_email,
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    private function sendSMSRecoveryAlert(): void
+    {
+        try {
+            $message = "✅ RECOVERED: {$this->monitor->name} is back UP\n\n";
+            $message .= "URL: {$this->monitor->url}\n";
+            $message .= "Time: " . now()->format('M j, H:i') . "\n";
+            $message .= "Type: " . \strtoupper($this->monitor->type) . "\n\n";
+            $message .= "Your monitor is working normally again! 🎉";
+
+            $twilio = new TwilioClient(
+                config('services.twilio.sid'),
+                config('services.twilio.auth_token')
+            );
+
+            $twilio->messages->create($this->monitor->notification_phone, [
+                'from' => config('services.twilio.phone_number'),
+                'body' => $message
+            ]);
+
+            // Store the outgoing recovery notification
+            SMSConversation::create([
+                'phone_number' => $this->monitor->notification_phone,
+                'message_type' => 'outgoing',
+                'content' => $message,
+                'processed' => true,
+                'processed_at' => now(),
+            ]);
+
+            Log::info('SMS recovery alert sent', [
+                'monitor_id' => $this->monitor->id,
+                'phone' => $this->monitor->notification_phone
+            ]);
+
+        } catch (Exception $e) {
+            Log::error('Failed to send SMS recovery alert', [
+                'monitor_id' => $this->monitor->id,
+                'phone' => $this->monitor->notification_phone,
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    private function sendEmailRecoveryAlert(): void
+    {
+        try {
+            $subject = "✅ RECOVERED: {$this->monitor->name} is back UP";
+            
+            $message = "Monitor Recovery\n\n";
+            $message .= "Great news! Your monitor is working again.\n\n";
+            $message .= "Monitor: {$this->monitor->name}\n";
+            $message .= "Status: UP\n";
+            $message .= "URL: {$this->monitor->url}\n";
+            $message .= "Type: " . \strtoupper($this->monitor->type) . "\n";
+            $message .= "Recovery Time: " . now()->format('M j, Y H:i T') . "\n\n";
+            $message .= "Check your dashboard for more details:\n";
+            $message .= config('app.url') . "/monitors/{$this->monitor->id}\n\n";
+            $message .= "This is an automated recovery notification from your monitoring system.";
+
+            // Send email using Laravel's Mail facade
+            \Illuminate\Support\Facades\Mail::raw($message, function ($mail) use ($subject) {
+                $mail->to($this->monitor->notification_email)
+                     ->subject($subject)
+                     ->from(config('mail.from.address', 'noreply@' . \parse_url(config('app.url'), PHP_URL_HOST)), 
+                            config('mail.from.name', 'Monitor System'));
+            });
+
+            Log::info('Email recovery alert sent', [
+                'monitor_id' => $this->monitor->id,
+                'email' => $this->monitor->notification_email,
+                'subject' => $subject
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to send email recovery alert', [
                 'monitor_id' => $this->monitor->id,
                 'email' => $this->monitor->notification_email,
                 'error' => $e->getMessage()
