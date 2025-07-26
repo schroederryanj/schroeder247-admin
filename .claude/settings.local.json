@@ -10,7 +10,10 @@
       "Bash(composer:*)",
       "Bash(php artisan breeze:install:*)",
       "Bash(php artisan:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(gh pr merge:*)",
+      "Bash(git stash:*)",
+      "Bash(mkdir:*)"
     ],
     "deny": []
   }
