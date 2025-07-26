@@ -1,0 +1,72 @@
+name: Deploy to Cloudways
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Deploy to Cloudways
+      env:
+        CLOUDWAYS_EMAIL: ${{ secrets.CLOUDWAYS_EMAIL }}
+        CLOUDWAYS_API_KEY: ${{ secrets.CLOUDWAYS_API_KEY }}
+        CLOUDWAYS_SERVER_ID: ${{ secrets.CLOUDWAYS_SERVER_ID }}
+        CLOUDWAYS_APP_ID: ${{ secrets.CLOUDWAYS_APP_ID }}
+      run: |
+        # Install curl if not available
+        which curl || sudo apt-get install -y curl
+        
+        # Get access token
+        echo "Authenticating with Cloudways API..."
+        ACCESS_TOKEN=$(curl -s -X POST https://api.cloudways.com/api/v1/oauth/access_token \
+          -d "email=${CLOUDWAYS_EMAIL}" \
+          -d "api_key=${CLOUDWAYS_API_KEY}" \
+          | grep -o '"access_token":"[^"]*' | cut -d'"' -f4)
+        
+        if [ -z "$ACCESS_TOKEN" ]; then
+          echo "Failed to authenticate with Cloudways API"
+          exit 1
+        fi
+        
+        echo "✓ Authentication successful"
+        
+        # Trigger git pull
+        echo "Deploying latest code..."
+        RESPONSE=$(curl -s -X POST https://api.cloudways.com/api/v1/git/pull \
+          -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "server_id": "'"${CLOUDWAYS_SERVER_ID}"'",
+            "app_id": "'"${CLOUDWAYS_APP_ID}"'",
+            "deploy_path": "public_html",
+            "branch_name": "main"
+          }')
+        
+        echo "Response: $RESPONSE"
+        
+        # Wait for deployment
+        sleep 10
+        
+        # Clear caches
+        echo "Clearing Laravel caches..."
+        for cmd in "config:cache" "route:cache" "view:cache" "queue:restart"; do
+          echo "Running: php artisan $cmd"
+          curl -s -X POST https://api.cloudways.com/api/v1/app/manage/ssh_cmd \
+            -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "server_id": "'"${CLOUDWAYS_SERVER_ID}"'",
+              "app_id": "'"${CLOUDWAYS_APP_ID}"'",
+              "command": "cd /home/master_zgrjnvnece/applications/zgrjnvnece/public_html && php artisan '"$cmd"'"
+            }'
+          sleep 2
+        done
+        
+        echo "✓ Deployment complete!"
