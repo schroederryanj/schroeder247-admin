@@ -19,6 +19,7 @@ jobs:
         CLOUDWAYS_API_KEY: ${{ secrets.CLOUDWAYS_API_KEY }}
         CLOUDWAYS_SERVER_ID: ${{ secrets.CLOUDWAYS_SERVER_ID }}
         CLOUDWAYS_APP_ID: ${{ secrets.CLOUDWAYS_APP_ID }}
+        DEPLOY_SECRET: ${{ secrets.DEPLOY_SECRET }}
       run: |
         # Install curl if not available
         which curl || sudo apt-get install -y curl
@@ -52,9 +53,16 @@ jobs:
         echo "Response: $RESPONSE"
         
         # Wait for deployment
-        sleep 10
+        sleep 15
         
-        # Note: Laravel cache clearing will be handled by a separate deployment hook
-        echo "Git pull completed successfully"
+        # Clear Laravel caches via webhook
+        echo "Clearing Laravel caches..."
+        DEPLOY_RESPONSE=$(curl -s -X POST https://admin.schroeder247.com/deploy \
+          -H "Content-Type: application/json" \
+          -d '{
+            "secret": "'"${DEPLOY_SECRET}"'"
+          }')
+        
+        echo "Cache clear response: $DEPLOY_RESPONSE"
         
         echo "✓ Deployment complete!"

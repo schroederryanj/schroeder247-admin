@@ -16,7 +16,9 @@
       "Bash(mkdir:*)",
       "Bash(git pull:*)",
       "Bash(php:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(gh run list:*)",
+      "Bash(gh run view:*)"
     ],
     "deny": []
   }
