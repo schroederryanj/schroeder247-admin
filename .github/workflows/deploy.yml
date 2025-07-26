@@ -45,7 +45,7 @@ jobs:
           -d '{
             "server_id": "'"${CLOUDWAYS_SERVER_ID}"'",
             "app_id": "'"${CLOUDWAYS_APP_ID}"'",
-            "deploy_path": "public_html",
+            "deploy_path": null,
             "branch_name": "main"
           }')
         

@@ -51,8 +51,15 @@ class CloudwaysAPI {
             throw new Exception('Not authenticated. Call authenticate() first.');
         }
         
+        $url = $this->baseUrl . $endpoint;
+        
+        // For GET requests, add query parameters
+        if ($method === 'GET' && !empty($data)) {
+            $url .= '?' . http_build_query($data);
+        }
+        
         $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $this->baseUrl . $endpoint);
+        curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
             'Authorization: Bearer ' . $this->accessToken,
@@ -86,7 +93,7 @@ class CloudwaysAPI {
         $result = $this->request('POST', '/git/pull', [
             'server_id' => $serverId,
             'app_id' => $appId,
-            'deploy_path' => $deployPath,
+            'deploy_path' => null,
             'branch_name' => 'main'
         ]);
         
@@ -138,6 +145,28 @@ class CloudwaysAPI {
     }
     
     /**
+     * Get deployment history
+     */
+    public function getDeploymentHistory($serverId, $appId) {
+        echo "Getting deployment history for app {$appId}...\n";
+        
+        $result = $this->request('GET', '/git/history', [
+            'server_id' => $serverId,
+            'app_id' => $appId
+        ]);
+        
+        if ($result['code'] === 200) {
+            echo "✓ Deployment history retrieved\n";
+            echo "Response: " . json_encode($result['response'], JSON_PRETTY_PRINT) . "\n";
+        } else {
+            echo "✗ Failed to get deployment history\n";
+            echo "Response: " . json_encode($result['response']) . "\n";
+        }
+        
+        return $result;
+    }
+
+    /**
      * Track operation status
      */
     private function trackOperation($serverId, $operationId) {
@@ -182,12 +211,15 @@ $api = new CloudwaysAPI($config['email'], $config['api_key']);
 if ($api->authenticate()) {
     echo "✓ Authentication successful\n\n";
     
+    // Check deployment history first
+    $api->getDeploymentHistory($config['server_id'], $config['app_id']);
+    
     // Pull latest code
     $api->gitPull($config['server_id'], $config['app_id']);
     
-    // Run Laravel commands
-    echo "\nRunning Laravel commands...\n";
-    $api->runArtisanCommands($config['server_id'], $config['app_id']);
+    // Check deployment history after
+    echo "\nChecking deployment history after pull...\n";
+    $api->getDeploymentHistory($config['server_id'], $config['app_id']);
     
     echo "\n✓ Deployment complete!\n";
 } else {
