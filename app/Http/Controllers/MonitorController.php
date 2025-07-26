@@ -63,7 +63,10 @@ class MonitorController extends Controller
         $validated['user_id'] = Auth::id();
         $validated['current_status'] = 'unknown';
 
-        Monitor::create($validated);
+        $monitor = Monitor::create($validated);
+
+        // Immediately check the monitor to get initial status
+        \App\Jobs\CheckMonitor::dispatchSync($monitor);
 
         return redirect()->route('monitors.index')
             ->with('success', 'Monitor created successfully!');

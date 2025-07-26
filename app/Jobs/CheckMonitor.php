@@ -88,41 +88,75 @@ class CheckMonitor implements ShouldQueue
 
     private function checkHttp(array &$result, float $startTime): void
     {
-        $response = Http::timeout($this->monitor->timeout)
-            ->get($this->monitor->url);
+        try {
+            // Add more robust HTTP options for various servers
+            $response = Http::timeout($this->monitor->timeout)
+                ->withOptions([
+                    'verify' => false, // Don't verify SSL for problematic certificates
+                    'allow_redirects' => true, // Follow redirects
+                    'http_errors' => false, // Don't throw on 4xx/5xx status codes
+                ])
+                ->withHeaders([
+                    'User-Agent' => 'SchroederMonitor/1.0',
+                    'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                ])
+                ->get($this->monitor->url);
 
-        $endTime = microtime(true);
-        $result['response_time'] = round(($endTime - $startTime) * 1000);
-        $result['status_code'] = $response->status();
+            $endTime = microtime(true);
+            $result['response_time'] = round(($endTime - $startTime) * 1000);
+            $result['status_code'] = $response->status();
 
-        if ($this->monitor->expected_status_code) {
-            $statusOk = $response->status() === $this->monitor->expected_status_code;
-        } else {
-            $statusOk = $response->successful();
-        }
+            // Log the response for debugging
+            Log::info('HTTP check response', [
+                'monitor_id' => $this->monitor->id,
+                'url' => $this->monitor->url,
+                'status_code' => $response->status(),
+                'response_time' => $result['response_time'],
+                'content_length' => strlen($response->body()),
+                'headers' => $response->headers()
+            ]);
 
-        if ($this->monitor->expected_content) {
-            $contentOk = str_contains($response->body(), $this->monitor->expected_content);
-        } else {
-            $contentOk = true;
-        }
+            if ($this->monitor->expected_status_code) {
+                $statusOk = $response->status() === $this->monitor->expected_status_code;
+            } else {
+                // Consider 2xx and 3xx as successful
+                $statusOk = $response->status() >= 200 && $response->status() < 400;
+            }
 
-        if ($this->monitor->ssl_check && $this->monitor->type === 'https') {
-            $sslOk = $this->checkSsl($this->monitor->url);
-        } else {
-            $sslOk = true;
-        }
+            if ($this->monitor->expected_content) {
+                $contentOk = str_contains($response->body(), $this->monitor->expected_content);
+            } else {
+                $contentOk = true;
+            }
 
-        if ($statusOk && $contentOk && $sslOk) {
-            $result['status'] = 'up';
-        } elseif ($statusOk && !$contentOk) {
-            $result['status'] = 'warning';
-            $result['error_message'] = 'Expected content not found';
-        } elseif (!$sslOk) {
-            $result['status'] = 'warning';
-            $result['error_message'] = 'SSL certificate issue';
-        } else {
-            $result['error_message'] = 'HTTP status: ' . $response->status();
+            if ($this->monitor->ssl_check && $this->monitor->type === 'https') {
+                $sslOk = $this->checkSsl($this->monitor->url);
+            } else {
+                $sslOk = true;
+            }
+
+            if ($statusOk && $contentOk && $sslOk) {
+                $result['status'] = 'up';
+            } elseif ($statusOk && !$contentOk) {
+                $result['status'] = 'warning';
+                $result['error_message'] = 'Expected content not found';
+            } elseif (!$sslOk) {
+                $result['status'] = 'warning';
+                $result['error_message'] = 'SSL certificate issue';
+            } else {
+                $result['error_message'] = 'HTTP status: ' . $response->status();
+            }
+
+        } catch (\Exception $e) {
+            $endTime = microtime(true);
+            $result['response_time'] = round(($endTime - $startTime) * 1000);
+            $result['error_message'] = 'HTTP request failed: ' . $e->getMessage();
+            
+            Log::error('HTTP check failed', [
+                'monitor_id' => $this->monitor->id,
+                'url' => $this->monitor->url,
+                'error' => $e->getMessage()
+            ]);
         }
     }
 

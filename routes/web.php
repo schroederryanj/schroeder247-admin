@@ -53,3 +53,14 @@ Route::post('/sms/webhook', [SMSController::class, 'handleIncomingMessage'])->na
 
 // Deployment webhook (secured with secret)
 Route::post('/deploy', [\App\Http\Controllers\DeploymentController::class, 'deploy'])->name('deploy.webhook');
+
+// Cron job endpoint for monitor checks (secured with secret)
+Route::get('/cron/check-monitors', function() {
+    $secret = request()->query('secret');
+    if ($secret !== config('app.deploy_secret')) {
+        abort(403);
+    }
+    
+    \Illuminate\Support\Facades\Artisan::call('monitors:check-all');
+    return response()->json(['status' => 'success', 'message' => 'Monitor checks dispatched']);
+})->name('cron.monitors');
