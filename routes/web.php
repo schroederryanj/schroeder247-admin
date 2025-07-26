@@ -48,8 +48,8 @@ Route::get('/sms/test', function () {
     ]);
 });
 
-// SMS webhook endpoint
-Route::post('/sms/webhook', [SMSController::class, 'handleIncomingMessage'])->name('sms.webhook');
+// SMS webhook endpoint (fallback for web routes if API routes don't work)
+Route::post('/sms/webhook', [SMSController::class, 'handleIncomingMessage'])->name('sms.webhook.fallback');
 
 // Deployment webhook (secured with secret)
 Route::post('/deploy', [\App\Http\Controllers\DeploymentController::class, 'deploy'])->name('deploy.webhook');
