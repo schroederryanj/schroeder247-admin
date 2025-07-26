@@ -166,13 +166,13 @@ class CheckMonitor implements ShouldQueue
         
         // Detect OS and use appropriate ping command
         if (PHP_OS_FAMILY === 'Windows') {
-            $pingCommand = "ping -n 1 -w " . ($this->monitor->timeout * 1000) . " " . \escapeshellarg($host);
+            $pingCommand = "ping -n 1 -w " . ($this->monitor->timeout * 1000) . " " . $this->escapeShellArg($host);
         } else {
             // Linux/Unix ping command
-            $pingCommand = "ping -c 1 -W " . $this->monitor->timeout . " " . \escapeshellarg($host);
+            $pingCommand = "ping -c 1 -W " . $this->monitor->timeout . " " . $this->escapeShellArg($host);
         }
         
-        $pingResult = \exec($pingCommand, $output, $returnCode);
+        $pingResult = $this->execCommand($pingCommand, $output, $returnCode);
         
         $endTime = \microtime(true);
         $result['response_time'] = \round(($endTime - $startTime) * 1000);
@@ -342,5 +342,21 @@ class CheckMonitor implements ShouldQueue
             'email' => $this->monitor->notification_email,
             'status' => $status
         ]);
+    }
+
+    /**
+     * Wrapper for exec() function to avoid namespace issues
+     */
+    private function execCommand(string $command, array &$output = null, int &$returnCode = null): string
+    {
+        return exec($command, $output, $returnCode);
+    }
+
+    /**
+     * Wrapper for escapeshellarg() function to avoid namespace issues
+     */
+    private function escapeShellArg(string $arg): string
+    {
+        return escapeshellarg($arg);
     }
 }
