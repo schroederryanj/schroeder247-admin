@@ -54,19 +54,7 @@ jobs:
         # Wait for deployment
         sleep 10
         
-        # Clear caches
-        echo "Clearing Laravel caches..."
-        for cmd in "config:cache" "route:cache" "view:cache" "queue:restart"; do
-          echo "Running: php artisan $cmd"
-          curl -s -X POST https://api.cloudways.com/api/v1/app/manage/ssh_cmd \
-            -H "Authorization: Bearer ${ACCESS_TOKEN}" \
-            -H "Content-Type: application/json" \
-            -d '{
-              "server_id": "'"${CLOUDWAYS_SERVER_ID}"'",
-              "app_id": "'"${CLOUDWAYS_APP_ID}"'",
-              "command": "cd /home/master_zgrjnvnece/applications/mkryvrcxkv/public_html && php artisan '"$cmd"'"
-            }'
-          sleep 2
-        done
+        # Note: Laravel cache clearing will be handled by a separate deployment hook
+        echo "Git pull completed successfully"
         
         echo "✓ Deployment complete!"
