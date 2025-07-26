@@ -103,7 +103,7 @@ class CheckMonitor implements ShouldQueue
                 ->get($this->monitor->url);
 
             $endTime = \microtime(true);
-            $result['response_time'] = \\round(($endTime - $startTime) * 1000);
+            $result['response_time'] = \round(($endTime - $startTime) * 1000);
             $result['status_code'] = $response->status();
 
             // Log the response for debugging
@@ -149,7 +149,7 @@ class CheckMonitor implements ShouldQueue
 
         } catch (\Exception $e) {
             $endTime = \microtime(true);
-            $result['response_time'] = \\round(($endTime - $startTime) * 1000);
+            $result['response_time'] = \round(($endTime - $startTime) * 1000);
             $result['error_message'] = 'HTTP request failed: ' . $e->getMessage();
             
             Log::error('HTTP check failed', [
@@ -175,7 +175,7 @@ class CheckMonitor implements ShouldQueue
         $pingResult = \exec($pingCommand, $output, $returnCode);
         
         $endTime = \microtime(true);
-        $result['response_time'] = \\round(($endTime - $startTime) * 1000);
+        $result['response_time'] = \round(($endTime - $startTime) * 1000);
 
         if ($returnCode === 0) {
             $result['status'] = 'up';
@@ -197,7 +197,7 @@ class CheckMonitor implements ShouldQueue
         $connection = @\fsockopen($host, $port, $errno, $errstr, $this->monitor->timeout);
         
         $endTime = \microtime(true);
-        $result['response_time'] = \\round(($endTime - $startTime) * 1000);
+        $result['response_time'] = \round(($endTime - $startTime) * 1000);
 
         if ($connection) {
             $result['status'] = 'up';
