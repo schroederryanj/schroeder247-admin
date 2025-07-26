@@ -4,10 +4,12 @@ namespace App\Jobs;
 
 use App\Models\Monitor;
 use App\Models\MonitorResult;
+use App\Models\SMSConversation;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Twilio\Rest\Client as TwilioClient;
 use Exception;
 
 class CheckMonitor implements ShouldQueue
@@ -55,6 +57,9 @@ class CheckMonitor implements ShouldQueue
 
             MonitorResult::create($result);
 
+            // Check if we need to send notifications
+            $this->checkNotifications($result['status']);
+
             Log::info('Monitor check completed', [
                 'monitor_id' => $this->monitor->id,
                 'status' => $result['status'],
@@ -70,6 +75,9 @@ class CheckMonitor implements ShouldQueue
             ]);
 
             MonitorResult::create($result);
+
+            // Check if we need to send notifications for failure
+            $this->checkNotifications('down');
 
             Log::error('Monitor check failed', [
                 'monitor_id' => $this->monitor->id,
@@ -190,5 +198,102 @@ class CheckMonitor implements ShouldQueue
         $expiryDate = $certInfo['validTo_time_t'];
 
         return $expiryDate > time() + (30 * 24 * 60 * 60);
+    }
+
+    private function checkNotifications(string $currentStatus): void
+    {
+        // Only send notifications if monitor is down or has warnings
+        if ($currentStatus === 'up') {
+            return;
+        }
+
+        // Check if enough consecutive failures have occurred
+        $recentFailures = $this->monitor->results()
+            ->where('status', '!=', 'up')
+            ->orderBy('checked_at', 'desc')
+            ->limit($this->monitor->notification_threshold)
+            ->count();
+
+        if ($recentFailures < $this->monitor->notification_threshold) {
+            return;
+        }
+
+        // Don't spam notifications - check if we sent one recently
+        $lastNotification = $this->monitor->last_notification_sent;
+        $notificationCooldown = 30; // 30 minutes between notifications
+
+        if ($lastNotification && $lastNotification->diffInMinutes(now()) < $notificationCooldown) {
+            return;
+        }
+
+        // Send SMS notification if enabled
+        if ($this->monitor->sms_notifications && $this->monitor->notification_phone) {
+            $this->sendSMSAlert($currentStatus);
+        }
+
+        // Send Email notification if enabled (placeholder for future implementation)
+        if ($this->monitor->email_notifications && $this->monitor->notification_email) {
+            $this->sendEmailAlert($currentStatus);
+        }
+
+        // Update last notification sent timestamp
+        $this->monitor->update(['last_notification_sent' => now()]);
+    }
+
+    private function sendSMSAlert(string $status): void
+    {
+        try {
+            $statusEmoji = $status === 'down' ? '❌' : '⚠️';
+            $statusText = strtoupper($status);
+            
+            $message = "{$statusEmoji} ALERT: {$this->monitor->name} is {$statusText}\n\n";
+            $message .= "URL: {$this->monitor->url}\n";
+            $message .= "Time: " . now()->format('M j, H:i') . "\n";
+            $message .= "Type: " . strtoupper($this->monitor->type) . "\n\n";
+            $message .= "Check your dashboard for more details.";
+
+            $twilio = new TwilioClient(
+                config('services.twilio.sid'),
+                config('services.twilio.auth_token')
+            );
+
+            $twilio->messages->create($this->monitor->notification_phone, [
+                'from' => config('services.twilio.phone_number'),
+                'body' => $message
+            ]);
+
+            // Store the outgoing notification in SMS conversations
+            SMSConversation::create([
+                'phone_number' => $this->monitor->notification_phone,
+                'message_type' => 'outgoing',
+                'content' => $message,
+                'processed' => true,
+                'processed_at' => now(),
+            ]);
+
+            Log::info('SMS alert sent', [
+                'monitor_id' => $this->monitor->id,
+                'phone' => $this->monitor->notification_phone,
+                'status' => $status
+            ]);
+
+        } catch (Exception $e) {
+            Log::error('Failed to send SMS alert', [
+                'monitor_id' => $this->monitor->id,
+                'phone' => $this->monitor->notification_phone,
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    private function sendEmailAlert(string $status): void
+    {
+        // TODO: Implement email notifications
+        // This would use Laravel's mail system to send email alerts
+        Log::info('Email notification would be sent here', [
+            'monitor_id' => $this->monitor->id,
+            'email' => $this->monitor->notification_email,
+            'status' => $status
+        ]);
     }
 }

@@ -23,14 +23,23 @@ class Monitor extends Model
         'expected_content',
         'ssl_check',
         'enabled',
+        'sms_notifications',
+        'notification_phone',
+        'email_notifications',
+        'notification_email',
+        'notification_threshold',
         'last_checked_at',
-        'current_status'
+        'current_status',
+        'last_notification_sent'
     ];
 
     protected $casts = [
         'ssl_check' => 'boolean',
         'enabled' => 'boolean',
+        'sms_notifications' => 'boolean',
+        'email_notifications' => 'boolean',
         'last_checked_at' => 'datetime',
+        'last_notification_sent' => 'datetime',
     ];
 
     public function user(): BelongsTo
