@@ -54,6 +54,37 @@ Route::post('/sms/webhook', [SMSController::class, 'handleIncomingMessage'])->na
 // Deployment webhook (secured with secret)
 Route::post('/deploy', [\App\Http\Controllers\DeploymentController::class, 'deploy'])->name('deploy.webhook');
 
+// Manual cache clear endpoint (GET for easy browser access)
+Route::get('/clear-cache', function() {
+    $secret = request()->query('secret');
+    if ($secret !== config('app.deploy_secret')) {
+        abort(403);
+    }
+    
+    try {
+        \Illuminate\Support\Facades\Artisan::call('config:clear');
+        \Illuminate\Support\Facades\Artisan::call('route:clear');
+        \Illuminate\Support\Facades\Artisan::call('view:clear');
+        \Illuminate\Support\Facades\Artisan::call('cache:clear');
+        
+        \Illuminate\Support\Facades\Artisan::call('config:cache');
+        \Illuminate\Support\Facades\Artisan::call('route:cache');
+        \Illuminate\Support\Facades\Artisan::call('view:cache');
+        
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Cache cleared and rebuilt successfully',
+            'timestamp' => now()->toISOString()
+        ]);
+        
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Cache clearing failed: ' . $e->getMessage()
+        ], 500);
+    }
+})->name('clear.cache');
+
 // Cron job endpoint for monitor checks (secured with secret)
 Route::get('/cron/check-monitors', function() {
     $secret = request()->query('secret');
