@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex justify-between items-center">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
                 {{ __('Edit Monitor: ') . $monitor->name }}
             </h2>
             <a href="{{ route('monitors.index') }}" 
@@ -13,8 +13,8 @@
 
     <div class="py-12">
         <div class="max-w-2xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 text-gray-900">
+            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="p-6 text-gray-900 dark:text-gray-100">
                     <form method="POST" action="{{ route('monitors.update', $monitor) }}" class="space-y-6">
                         @csrf
                         @method('PUT')
@@ -31,7 +31,7 @@
                             <x-text-input id="url" class="block mt-1 w-full" type="text" name="url" 
                                          :value="old('url', $monitor->url)" required />
                             <x-input-error :messages="$errors->get('url')" class="mt-2" />
-                            <p class="text-sm text-gray-600 mt-1">Enter the full URL (e.g., https://example.com) or IP address (e.g., 192.168.1.1)</p>
+                            <p class="text-sm text-gray-600 dark:text-gray-300 mt-1">Enter the full URL (e.g., https://example.com) or IP address (e.g., 192.168.1.1)</p>
                         </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -80,7 +80,7 @@
                                              name="expected_status_code" :value="old('expected_status_code', $monitor->expected_status_code)" 
                                              min="100" max="599" />
                                 <x-input-error :messages="$errors->get('expected_status_code')" class="mt-2" />
-                                <p class="text-sm text-gray-600 mt-1">Leave blank to accept any 2xx status code</p>
+                                <p class="text-sm text-gray-600 dark:text-gray-300 mt-1">Leave blank to accept any 2xx status code</p>
                             </div>
 
                             <div class="mb-4">
@@ -89,7 +89,7 @@
                                          class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
                                          placeholder="Text that should be present on the page">{{ old('expected_content', $monitor->expected_content) }}</textarea>
                                 <x-input-error :messages="$errors->get('expected_content')" class="mt-2" />
-                                <p class="text-sm text-gray-600 mt-1">Check if specific text exists on the page</p>
+                                <p class="text-sm text-gray-600 dark:text-gray-300 mt-1">Check if specific text exists on the page</p>
                             </div>
                         </div>
 
@@ -129,7 +129,7 @@
                                         <label for="sms_notifications" class="text-sm font-medium text-gray-900">
                                             SMS Notifications
                                         </label>
-                                        <p class="text-sm text-gray-600">Send SMS alerts when this monitor goes down</p>
+                                        <p class="text-sm text-gray-600 dark:text-gray-300">Send SMS alerts when this monitor goes down</p>
                                         
                                         <div class="mt-2" id="sms-phone-field" style="display: {{ old('sms_notifications', $monitor->sms_notifications) ? 'block' : 'none' }};">
                                             <x-input-label for="notification_phone" :value="__('Phone Number')" />
@@ -137,7 +137,7 @@
                                                          name="notification_phone" :value="old('notification_phone', $monitor->notification_phone)" 
                                                          placeholder="+1234567890" />
                                             <x-input-error :messages="$errors->get('notification_phone')" class="mt-2" />
-                                            <p class="text-sm text-gray-600 mt-1">Include country code (e.g., +1 for US)</p>
+                                            <p class="text-sm text-gray-600 dark:text-gray-300 mt-1">Include country code (e.g., +1 for US)</p>
                                         </div>
                                     </div>
                                 </div>
@@ -153,7 +153,7 @@
                                         <label for="email_notifications" class="text-sm font-medium text-gray-900">
                                             Email Notifications
                                         </label>
-                                        <p class="text-sm text-gray-600">Send email alerts when this monitor goes down</p>
+                                        <p class="text-sm text-gray-600 dark:text-gray-300">Send email alerts when this monitor goes down</p>
                                         
                                         <div class="mt-2" id="email-field" style="display: {{ old('email_notifications', $monitor->email_notifications) ? 'block' : 'none' }};">
                                             <x-input-label for="notification_email" :value="__('Email Address')" />
@@ -172,7 +172,7 @@
                                                  name="notification_threshold" :value="old('notification_threshold', $monitor->notification_threshold)" 
                                                  required min="1" max="10" />
                                     <x-input-error :messages="$errors->get('notification_threshold')" class="mt-2" />
-                                    <p class="text-sm text-gray-600 mt-1">Number of consecutive failed checks before sending an alert</p>
+                                    <p class="text-sm text-gray-600 dark:text-gray-300 mt-1">Number of consecutive failed checks before sending an alert</p>
                                 </div>
                             </div>
                         </div>
