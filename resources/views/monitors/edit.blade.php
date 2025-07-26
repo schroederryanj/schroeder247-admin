@@ -113,6 +113,70 @@
                             </div>
                         </div>
 
+                        <!-- Notification Settings -->
+                        <div class="border-t pt-6">
+                            <h3 class="text-lg font-medium text-gray-900 mb-4">Notification Settings</h3>
+                            
+                            <div class="space-y-4">
+                                <!-- SMS Notifications -->
+                                <div class="flex items-start space-x-3">
+                                    <div class="flex items-center h-5">
+                                        <input id="sms_notifications" name="sms_notifications" type="checkbox" value="1" 
+                                               {{ old('sms_notifications', $monitor->sms_notifications) ? 'checked' : '' }}
+                                               class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                                    </div>
+                                    <div class="flex-1">
+                                        <label for="sms_notifications" class="text-sm font-medium text-gray-900">
+                                            SMS Notifications
+                                        </label>
+                                        <p class="text-sm text-gray-600">Send SMS alerts when this monitor goes down</p>
+                                        
+                                        <div class="mt-2" id="sms-phone-field" style="display: {{ old('sms_notifications', $monitor->sms_notifications) ? 'block' : 'none' }};">
+                                            <x-input-label for="notification_phone" :value="__('Phone Number')" />
+                                            <x-text-input id="notification_phone" class="block mt-1 w-full" type="tel" 
+                                                         name="notification_phone" :value="old('notification_phone', $monitor->notification_phone)" 
+                                                         placeholder="+1234567890" />
+                                            <x-input-error :messages="$errors->get('notification_phone')" class="mt-2" />
+                                            <p class="text-sm text-gray-600 mt-1">Include country code (e.g., +1 for US)</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Email Notifications -->
+                                <div class="flex items-start space-x-3">
+                                    <div class="flex items-center h-5">
+                                        <input id="email_notifications" name="email_notifications" type="checkbox" value="1" 
+                                               {{ old('email_notifications', $monitor->email_notifications) ? 'checked' : '' }}
+                                               class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                                    </div>
+                                    <div class="flex-1">
+                                        <label for="email_notifications" class="text-sm font-medium text-gray-900">
+                                            Email Notifications
+                                        </label>
+                                        <p class="text-sm text-gray-600">Send email alerts when this monitor goes down</p>
+                                        
+                                        <div class="mt-2" id="email-field" style="display: {{ old('email_notifications', $monitor->email_notifications) ? 'block' : 'none' }};">
+                                            <x-input-label for="notification_email" :value="__('Email Address')" />
+                                            <x-text-input id="notification_email" class="block mt-1 w-full" type="email" 
+                                                         name="notification_email" :value="old('notification_email', $monitor->notification_email)" 
+                                                         placeholder="you@example.com" />
+                                            <x-input-error :messages="$errors->get('notification_email')" class="mt-2" />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Notification Threshold -->
+                                <div>
+                                    <x-input-label for="notification_threshold" :value="__('Failed Checks Before Alert')" />
+                                    <x-text-input id="notification_threshold" class="block mt-1 w-full" type="number" 
+                                                 name="notification_threshold" :value="old('notification_threshold', $monitor->notification_threshold)" 
+                                                 required min="1" max="10" />
+                                    <x-input-error :messages="$errors->get('notification_threshold')" class="mt-2" />
+                                    <p class="text-sm text-gray-600 mt-1">Number of consecutive failed checks before sending an alert</p>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="flex items-center justify-end space-x-4">
                             <a href="{{ route('monitors.index') }}" 
                                class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">
@@ -133,6 +197,10 @@
             const typeSelect = document.getElementById('type');
             const portField = document.getElementById('port-field');
             const httpFields = document.getElementById('http-fields');
+            const smsCheckbox = document.getElementById('sms_notifications');
+            const emailCheckbox = document.getElementById('email_notifications');
+            const smsPhoneField = document.getElementById('sms-phone-field');
+            const emailField = document.getElementById('email-field');
             
             function toggleFields() {
                 const selectedType = typeSelect.value;
@@ -152,7 +220,28 @@
                 }
             }
             
+            function toggleNotificationFields() {
+                // Show/hide SMS phone field
+                if (smsCheckbox.checked) {
+                    smsPhoneField.style.display = 'block';
+                } else {
+                    smsPhoneField.style.display = 'none';
+                }
+                
+                // Show/hide email field
+                if (emailCheckbox.checked) {
+                    emailField.style.display = 'block';
+                } else {
+                    emailField.style.display = 'none';
+                }
+            }
+            
             typeSelect.addEventListener('change', toggleFields);
+            smsCheckbox.addEventListener('change', toggleNotificationFields);
+            emailCheckbox.addEventListener('change', toggleNotificationFields);
+            
+            toggleFields(); // Initial call
+            toggleNotificationFields(); // Initial call
         });
     </script>
 </x-app-layout>

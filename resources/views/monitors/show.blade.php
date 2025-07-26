@@ -127,6 +127,57 @@
                             <dd class="text-sm text-gray-900 bg-gray-50 p-3 rounded">{{ $monitor->expected_content }}</dd>
                         </div>
                     @endif
+
+                    <!-- Notification Settings -->
+                    <div class="mt-6 border-t pt-6">
+                        <h4 class="text-md font-medium text-gray-900 mb-4">Notification Settings</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <dl class="space-y-3">
+                                    <div>
+                                        <dt class="text-sm font-medium text-gray-500">SMS Alerts</dt>
+                                        <dd class="text-sm text-gray-900">
+                                            @if($monitor->sms_notifications)
+                                                <span class="text-green-600">✓ Enabled</span>
+                                                @if($monitor->notification_phone)
+                                                    <br><span class="text-xs text-gray-500">{{ $monitor->notification_phone }}</span>
+                                                @endif
+                                            @else
+                                                <span class="text-gray-500">Disabled</span>
+                                            @endif
+                                        </dd>
+                                    </div>
+                                    <div>
+                                        <dt class="text-sm font-medium text-gray-500">Email Alerts</dt>
+                                        <dd class="text-sm text-gray-900">
+                                            @if($monitor->email_notifications)
+                                                <span class="text-green-600">✓ Enabled</span>
+                                                @if($monitor->notification_email)
+                                                    <br><span class="text-xs text-gray-500">{{ $monitor->notification_email }}</span>
+                                                @endif
+                                            @else
+                                                <span class="text-gray-500">Disabled</span>
+                                            @endif
+                                        </dd>
+                                    </div>
+                                </dl>
+                            </div>
+                            <div>
+                                <dl class="space-y-3">
+                                    <div>
+                                        <dt class="text-sm font-medium text-gray-500">Alert Threshold</dt>
+                                        <dd class="text-sm text-gray-900">{{ $monitor->notification_threshold }} failed check{{ $monitor->notification_threshold > 1 ? 's' : '' }}</dd>
+                                    </div>
+                                    @if($monitor->last_notification_sent)
+                                        <div>
+                                            <dt class="text-sm font-medium text-gray-500">Last Alert Sent</dt>
+                                            <dd class="text-sm text-gray-900">{{ $monitor->last_notification_sent->format('M j, Y H:i') }}</dd>
+                                        </div>
+                                    @endif
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 

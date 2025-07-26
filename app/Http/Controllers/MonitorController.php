@@ -35,7 +35,12 @@ class MonitorController extends Controller
             'port' => 'nullable|integer|min:1|max:65535',
             'expected_content' => 'nullable|string|max:1000',
             'ssl_check' => 'boolean',
-            'enabled' => 'boolean'
+            'enabled' => 'boolean',
+            'sms_notifications' => 'boolean',
+            'notification_phone' => 'nullable|string|max:20',
+            'email_notifications' => 'boolean',
+            'notification_email' => 'nullable|email|max:255',
+            'notification_threshold' => 'required|integer|min:1|max:10'
         ]);
 
         $validated['user_id'] = Auth::id();
@@ -80,7 +85,12 @@ class MonitorController extends Controller
             'port' => 'nullable|integer|min:1|max:65535',
             'expected_content' => 'nullable|string|max:1000',
             'ssl_check' => 'boolean',
-            'enabled' => 'boolean'
+            'enabled' => 'boolean',
+            'sms_notifications' => 'boolean',
+            'notification_phone' => 'nullable|string|max:20',
+            'email_notifications' => 'boolean',
+            'notification_email' => 'nullable|email|max:255',
+            'notification_threshold' => 'required|integer|min:1|max:10'
         ]);
 
         $monitor->update($validated);
