@@ -157,4 +157,43 @@ class MonitorController extends Controller
         return redirect()->route('monitors.index')
             ->with('success', 'Monitor deleted successfully!');
     }
+
+    public function manualCheck(Monitor $monitor)
+    {
+        // Check if the monitor belongs to the authenticated user
+        if ($monitor->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        try {
+            // Run the check synchronously
+            $job = new \App\Jobs\CheckMonitor($monitor);
+            $job->handle();
+
+            // Get the latest result to show the outcome
+            $latestResult = $monitor->results()->latest('checked_at')->first();
+            
+            if ($latestResult) {
+                $status = $latestResult->status;
+                $responseTime = $latestResult->response_time ? $latestResult->response_time . 'ms' : 'N/A';
+                
+                if ($status === 'up') {
+                    $message = "✅ Check completed! Monitor is UP (Response: {$responseTime})";
+                    $alertType = 'success';
+                } else {
+                    $errorMsg = $latestResult->error_message ? ': ' . $latestResult->error_message : '';
+                    $message = "❌ Check completed! Monitor is {$status}{$errorMsg}";
+                    $alertType = 'error';
+                }
+            } else {
+                $message = "Check completed, but no results recorded.";
+                $alertType = 'warning';
+            }
+
+            return back()->with($alertType, $message);
+
+        } catch (\Exception $e) {
+            return back()->with('error', 'Failed to check monitor: ' . $e->getMessage());
+        }
+    }
 }

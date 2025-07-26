@@ -23,6 +23,9 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     
     Route::resource('monitors', MonitorController::class);
+    
+    // Manual monitor check
+    Route::post('/monitors/{monitor}/check', [MonitorController::class, 'manualCheck'])->name('monitors.check');
 });
 
 require __DIR__.'/auth.php';

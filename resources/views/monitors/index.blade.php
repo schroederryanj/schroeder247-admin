@@ -19,6 +19,18 @@
                 </div>
             @endif
 
+            @if(session('error'))
+                <div class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                    {{ session('error') }}
+                </div>
+            @endif
+
+            @if(session('warning'))
+                <div class="mb-4 bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded">
+                    {{ session('warning') }}
+                </div>
+            @endif
+
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900">
                     @if($monitors->isEmpty())
@@ -68,11 +80,18 @@
                                         <span>Avg: {{ $monitor->average_response_time }}ms</span>
                                     </div>
                                     
-                                    <div class="flex space-x-2">
+                                    <div class="flex space-x-1">
                                         <a href="{{ route('monitors.show', $monitor) }}" 
                                            class="flex-1 bg-blue-500 hover:bg-blue-700 text-white text-center py-1 px-2 rounded text-sm">
                                             View
                                         </a>
+                                        <form action="{{ route('monitors.check', $monitor) }}" method="POST" class="flex-1">
+                                            @csrf
+                                            <button type="submit" 
+                                                    class="w-full bg-green-500 hover:bg-green-700 text-white py-1 px-2 rounded text-sm">
+                                                Check
+                                            </button>
+                                        </form>
                                         <a href="{{ route('monitors.edit', $monitor) }}" 
                                            class="flex-1 bg-gray-500 hover:bg-gray-700 text-white text-center py-1 px-2 rounded text-sm">
                                             Edit

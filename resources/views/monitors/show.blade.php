@@ -5,6 +5,13 @@
                 {{ $monitor->name }}
             </h2>
             <div class="flex space-x-2">
+                <form action="{{ route('monitors.check', $monitor) }}" method="POST" class="inline">
+                    @csrf
+                    <button type="submit" 
+                            class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                        Check Now
+                    </button>
+                </form>
                 <a href="{{ route('monitors.edit', $monitor) }}" 
                    class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
                     Edit
@@ -19,6 +26,23 @@
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+            @if(session('success'))
+                <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
+                    {{ session('success') }}
+                </div>
+            @endif
+
+            @if(session('error'))
+                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                    {{ session('error') }}
+                </div>
+            @endif
+
+            @if(session('warning'))
+                <div class="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded">
+                    {{ session('warning') }}
+                </div>
+            @endif
             <!-- Monitor Overview -->
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6">
