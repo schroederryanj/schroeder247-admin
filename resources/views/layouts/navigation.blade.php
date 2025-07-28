@@ -18,9 +18,6 @@
                     <x-nav-link :href="route('monitors.index')" :active="request()->routeIs('monitors.*')">
                         {{ __('Monitors') }}
                     </x-nav-link>
-                    <x-nav-link :href="route('kyle.dashboard')" :active="request()->routeIs('kyle.dashboard')">
-                        🚀 {{ __('Kyle Dashboard') }}
-                    </x-nav-link>
                 </div>
             </div>
 
@@ -96,9 +93,6 @@
             </x-responsive-nav-link>
             <x-responsive-nav-link :href="route('monitors.index')" :active="request()->routeIs('monitors.*')">
                 {{ __('Monitors') }}
-            </x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('kyle.dashboard')" :active="request()->routeIs('kyle.dashboard')">
-                🚀 {{ __('Kyle Dashboard') }}
             </x-responsive-nav-link>
         </div>
 
