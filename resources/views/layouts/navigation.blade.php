@@ -18,6 +18,9 @@
                     <x-nav-link :href="route('monitors.index')" :active="request()->routeIs('monitors.*')">
                         {{ __('Monitors') }}
                     </x-nav-link>
+                    <x-nav-link :href="route('james-nick')" :active="request()->routeIs('james-nick')">
+                        {{ __('James & Nick') }}
+                    </x-nav-link>
                 </div>
             </div>
 
@@ -93,6 +96,9 @@
             </x-responsive-nav-link>
             <x-responsive-nav-link :href="route('monitors.index')" :active="request()->routeIs('monitors.*')">
                 {{ __('Monitors') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('james-nick')" :active="request()->routeIs('james-nick')">
+                {{ __('James & Nick') }}
             </x-responsive-nav-link>
         </div>
 
