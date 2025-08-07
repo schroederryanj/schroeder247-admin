@@ -138,9 +138,11 @@ class ZabbixService
             $params = [
                 'output' => ['eventid', 'source', 'object', 'objectid', 'acknowledged', 'clock', 'severity', 'r_eventid'],
                 'selectTags' => 'extend',
+                'selectSuppressionData' => 'extend',
                 'source' => 0,
                 'object' => 0,
                 'recent' => true,
+                'suppressed' => false, // Exclude suppressed problems
                 'sortfield' => 'eventid',
                 'sortorder' => 'DESC',
                 'limit' => 100,
