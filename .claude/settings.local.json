@@ -22,7 +22,8 @@
       "Bash(npm run build:*)",
       "Bash(rm:*)",
       "WebFetch(domain:www.zabbix.com)",
-      "Bash(git branch:*)"
+      "Bash(git branch:*)",
+      "Bash(find:*)"
     ],
     "deny": []
   }
