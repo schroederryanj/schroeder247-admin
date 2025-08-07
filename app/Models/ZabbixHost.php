@@ -25,6 +25,7 @@ class ZabbixHost extends Model
         'email_notifications',
         'notification_email',
         'severity_settings',
+        'tags',
         'last_synced_at',
     ];
 
@@ -32,6 +33,7 @@ class ZabbixHost extends Model
         'interfaces' => 'array',
         'groups' => 'array',
         'severity_settings' => 'array',
+        'tags' => 'array',
         'monitored' => 'boolean',
         'sms_notifications' => 'boolean',
         'email_notifications' => 'boolean',

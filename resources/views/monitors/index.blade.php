@@ -47,6 +47,51 @@
                 </div>
             @endif
 
+            <!-- Tag Filter -->
+            @if($allTags->count() > 0)
+                <div class="mb-6 bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+                    <div class="p-6">
+                        <form method="GET" action="{{ route('monitors.index') }}" class="space-y-4">
+                            <div class="flex flex-wrap items-center gap-4">
+                                <div class="flex-1 min-w-64">
+                                    <label for="tags" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        Filter by Tags
+                                    </label>
+                                    <select name="tags[]" id="tags" multiple 
+                                            class="block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 shadow-sm">
+                                        @foreach($allTags as $tag)
+                                            <option value="{{ $tag }}" {{ in_array($tag, $selectedTags) ? 'selected' : '' }}>
+                                                {{ $tag }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="flex space-x-2 pt-6">
+                                    <button type="submit" 
+                                            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                                        Filter
+                                    </button>
+                                    <a href="{{ route('monitors.index') }}" 
+                                       class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">
+                                        Clear
+                                    </a>
+                                </div>
+                            </div>
+                            @if(!empty($selectedTags))
+                                <div class="flex flex-wrap gap-2">
+                                    <span class="text-sm text-gray-600 dark:text-gray-400">Filtering by:</span>
+                                    @foreach($selectedTags as $tag)
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                                            {{ $tag }}
+                                        </span>
+                                    @endforeach
+                                </div>
+                            @endif
+                        </form>
+                    </div>
+                </div>
+            @endif
+
             <!-- Summary Stats -->
             <div class="mb-6 grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-600">
@@ -115,6 +160,15 @@
                                                     CUSTOM
                                                 </span>
                                             </div>
+                                            @if(!empty($monitor->tags))
+                                                <div class="flex flex-wrap gap-1 mt-1">
+                                                    @foreach($monitor->tags as $tag)
+                                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-600 dark:text-gray-200">
+                                                            {{ $tag }}
+                                                        </span>
+                                                    @endforeach
+                                                </div>
+                                            @endif
                                         </div>
                                         <div class="flex items-center gap-1.5 ml-3">
                                             @if($monitor->current_status === 'up')
@@ -190,6 +244,15 @@
                                                     ZABBIX
                                                 </span>
                                             </div>
+                                            @if(!empty($host->tags))
+                                                <div class="flex flex-wrap gap-1 mt-1">
+                                                    @foreach($host->tags as $tag)
+                                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-600 dark:text-gray-200">
+                                                            {{ $tag }}
+                                                        </span>
+                                                    @endforeach
+                                                </div>
+                                            @endif
                                         </div>
                                         <div class="flex items-center gap-1.5 ml-3">
                                             @if($host->is_down)

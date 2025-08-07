@@ -58,7 +58,16 @@ class ZabbixHostController extends Controller
             'notification_email' => 'nullable|email|max:255',
             'severity_settings' => 'nullable|array',
             'severity_settings.*' => 'boolean',
+            'tags' => 'nullable|string|max:500'
         ]);
+
+        // Process tags - convert comma-separated string to array
+        if (!empty($validated['tags'])) {
+            $validated['tags'] = array_map('trim', explode(',', $validated['tags']));
+            $validated['tags'] = array_filter($validated['tags']); // Remove empty values
+        } else {
+            $validated['tags'] = [];
+        }
 
         $zabbixHost->update($validated);
 

@@ -166,6 +166,20 @@
                             </div>
                         </div>
 
+                        <!-- Tags -->
+                        <div class="border-t pt-6">
+                            <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Tags</h3>
+                            
+                            <div>
+                                <x-input-label for="tags" :value="__('Custom Tags')" />
+                                <x-text-input id="tags" class="block mt-1 w-full" type="text" 
+                                             name="tags" :value="old('tags', is_array($zabbixHost->tags) ? implode(', ', $zabbixHost->tags) : '')" 
+                                             placeholder="production, web, critical (comma-separated)" />
+                                <x-input-error :messages="$errors->get('tags')" class="mt-2" />
+                                <p class="text-sm text-gray-600 dark:text-gray-300 mt-1">Add tags to help organize and filter your Zabbix hosts</p>
+                            </div>
+                        </div>
+
                         <!-- Current Status (Read-only) -->
                         <div class="border-t pt-6">
                             <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Current Status</h3>
