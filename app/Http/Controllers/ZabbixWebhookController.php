@@ -84,6 +84,38 @@ class ZabbixWebhookController extends Controller
                     'trace' => $jobException->getTraceAsString()
                 ]);
             }
+
+            // Debug: Check database state after webhook
+            $hostCount = \App\Models\ZabbixHost::count();
+            $eventCount = \App\Models\ZabbixEvent::count();
+            $recentEvents = \App\Models\ZabbixEvent::with('zabbixHost')
+                ->orderBy('created_at', 'desc')
+                ->limit(5)
+                ->get();
+            
+            // Check for failed jobs
+            $failedJobsCount = \Illuminate\Support\Facades\DB::table('failed_jobs')->count();
+            $recentFailedJobs = \Illuminate\Support\Facades\DB::table('failed_jobs')
+                ->orderBy('failed_at', 'desc')
+                ->limit(3)
+                ->get(['payload', 'exception', 'failed_at']);
+
+            Log::info('Database state after webhook processing', [
+                'total_hosts' => $hostCount,
+                'total_events' => $eventCount,
+                'failed_jobs_count' => $failedJobsCount,
+                'recent_failed_jobs' => $recentFailedJobs->toArray(),
+                'recent_events' => $recentEvents->map(function($event) {
+                    return [
+                        'id' => $event->id,
+                        'zabbix_event_id' => $event->zabbix_event_id,
+                        'host_name' => $event->zabbixHost->name ?? 'Unknown',
+                        'severity' => $event->severity,
+                        'status' => $event->status,
+                        'created_at' => $event->created_at
+                    ];
+                })->toArray()
+            ]);
             
             return response('OK', 200);
 
