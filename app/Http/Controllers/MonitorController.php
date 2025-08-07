@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Monitor;
+use App\Models\ZabbixHost;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
@@ -15,7 +16,14 @@ class MonitorController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return view('monitors.index', compact('monitors'));
+        $zabbixHosts = ZabbixHost::where('user_id', Auth::id())
+            ->with(['activeEvents' => function($query) {
+                $query->orderBy('severity', 'desc')->limit(3);
+            }])
+            ->orderBy('name')
+            ->get();
+
+        return view('monitors.index', compact('monitors', 'zabbixHosts'));
     }
 
     public function create()

@@ -84,7 +84,7 @@
                             </div>
                             <div class="ml-4">
                                 <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Zabbix OK</div>
-                                <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ $zabbixOkCount ?? 0 }}</div>
+                                <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ $zabbixUpCount ?? 0 }}</div>
                             </div>
                         </div>
                     </div>
@@ -103,7 +103,7 @@
                             </div>
                             <div class="ml-4">
                                 <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Zabbix Issues</div>
-                                <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ $zabbixIssuesCount ?? 0 }}</div>
+                                <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ $zabbixDownCount ?? 0 }}</div>
                             </div>
                         </div>
                     </div>
@@ -124,13 +124,13 @@
                             <span class="text-sm font-medium text-gray-900 dark:text-white">Add Monitor</span>
                         </a>
 
-                        <a href="{{ route('zabbix-hosts.index') }}" class="flex items-center p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors">
+                        <a href="{{ route('monitors.index') }}" class="flex items-center p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors">
                             <div class="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center mr-3">
                                 <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path>
                                 </svg>
                             </div>
-                            <span class="text-sm font-medium text-gray-900 dark:text-white">Zabbix Hosts</span>
+                            <span class="text-sm font-medium text-gray-900 dark:text-white">All Monitoring</span>
                         </a>
 
                         <a href="#" class="flex items-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors">
@@ -264,10 +264,10 @@
                     <div class="p-6">
                         <div class="flex items-center justify-between mb-4">
                             <h3 class="text-lg font-medium text-gray-900 dark:text-white">Zabbix Hosts</h3>
-                            <a href="{{ route('zabbix-hosts.index') }}" class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300">Manage All</a>
+                            <a href="{{ route('monitors.index') }}" class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300">Manage All</a>
                         </div>
                         <div class="space-y-3">
-                            @forelse($zabbixHosts ?? [] as $host)
+                            @forelse($activeZabbixHosts ?? [] as $host)
                                 <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
                                     <div class="flex items-center space-x-3">
                                         <div class="flex-shrink-0">
@@ -319,11 +319,11 @@
                                     <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">No Zabbix hosts found</h3>
                                     <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Configure your Zabbix server and sync hosts to get started.</p>
                                     <div class="mt-6">
-                                        <a href="{{ route('zabbix-hosts.index') }}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
+                                        <a href="{{ route('monitors.index') }}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
                                             <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path>
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path>
                                             </svg>
-                                            Manage Zabbix Hosts
+                                            View All Monitoring
                                         </a>
                                     </div>
                                 </div>
