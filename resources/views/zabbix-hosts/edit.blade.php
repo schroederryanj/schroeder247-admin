@@ -124,7 +124,7 @@
                             <div class="space-y-3">
                                 @foreach(['disaster', 'high', 'average', 'warning', 'information'] as $severity)
                                     @php
-                                        $severitySettings = old('severity_settings', json_decode($zabbixHost->severity_settings ?? '{}', true));
+                                        $severitySettings = old('severity_settings', $zabbixHost->severity_settings ?? []);
                                         $isChecked = $severitySettings[$severity] ?? ($severity === 'disaster' || $severity === 'high');
                                         $severityColor = match($severity) {
                                             'disaster' => 'red-600',
