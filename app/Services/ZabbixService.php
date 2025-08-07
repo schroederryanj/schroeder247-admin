@@ -137,11 +137,10 @@ class ZabbixService
         try {
             $params = [
                 'output' => ['eventid', 'source', 'object', 'objectid', 'acknowledged', 'clock', 'severity', 'r_eventid'],
-                'selectTriggers' => ['triggerid', 'description', 'priority'],
-                'selectHosts' => ['hostid', 'name', 'host'],
+                'selectTags' => 'extend',
                 'source' => 0,
                 'object' => 0,
-                'problem' => true,
+                'recent' => true,
                 'sortfield' => 'clock',
                 'sortorder' => 'DESC',
                 'limit' => 100,
@@ -152,7 +151,35 @@ class ZabbixService
             }
 
             $response = $this->makeAuthenticatedRequest('problem.get', $params);
-            return $response['result'] ?? [];
+            $problems = $response['result'] ?? [];
+
+            // Get trigger information for each problem using objectid (which is trigger ID)
+            $triggerIds = array_column($problems, 'objectid');
+            $triggers = [];
+            
+            if (!empty($triggerIds)) {
+                $triggerResponse = $this->makeAuthenticatedRequest('trigger.get', [
+                    'output' => ['triggerid', 'description', 'priority'],
+                    'selectHosts' => ['hostid', 'name', 'host'],
+                    'triggerids' => $triggerIds,
+                ]);
+                
+                $triggersData = $triggerResponse['result'] ?? [];
+                foreach ($triggersData as $trigger) {
+                    $triggers[$trigger['triggerid']] = $trigger;
+                }
+            }
+
+            // Attach trigger data to problems
+            foreach ($problems as &$problem) {
+                if (isset($triggers[$problem['objectid']])) {
+                    $problem['triggers'] = [$triggers[$problem['objectid']]];
+                } else {
+                    $problem['triggers'] = [];
+                }
+            }
+
+            return $problems;
 
         } catch (Exception $e) {
             Log::error('Failed to fetch Zabbix problems', ['hostId' => $hostId, 'error' => $e->getMessage()]);
