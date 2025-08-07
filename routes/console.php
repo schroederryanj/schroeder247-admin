@@ -10,3 +10,6 @@ Artisan::command('inspire', function () {
 
 // Schedule monitor checks to run every minute
 Schedule::command('monitors:check-all')->everyMinute();
+
+// Schedule Zabbix host sync to run every 5 minutes
+Schedule::command('zabbix:sync-hosts')->everyFiveMinutes();
