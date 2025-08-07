@@ -31,6 +31,9 @@ class ZabbixHostController extends Controller
         $zabbixHost->load([
             'events' => function($query) {
                 $query->orderBy('event_time', 'desc')->limit(50);
+            },
+            'activeEvents' => function($query) {
+                $query->orderBy('event_time', 'desc');
             }
         ]);
 
