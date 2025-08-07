@@ -47,47 +47,61 @@
                 </div>
             @endif
 
-            <!-- Tag Filter -->
+            <!-- Modern Tag Filter -->
             @if($allTags->count() > 0)
-                <div class="mb-6 bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6">
-                        <form method="GET" action="{{ route('monitors.index') }}" class="space-y-4">
-                            <div class="flex flex-wrap items-center gap-4">
-                                <div class="flex-1 min-w-64">
-                                    <label for="tags" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                        Filter by Tags
-                                    </label>
-                                    <select name="tags[]" id="tags" multiple 
-                                            class="block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 shadow-sm">
-                                        @foreach($allTags as $tag)
-                                            <option value="{{ $tag }}" {{ in_array($tag, $selectedTags) ? 'selected' : '' }}>
-                                                {{ $tag }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="flex space-x-2 pt-6">
-                                    <button type="submit" 
-                                            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                                        Filter
-                                    </button>
-                                    <a href="{{ route('monitors.index') }}" 
-                                       class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">
-                                        Clear
-                                    </a>
-                                </div>
-                            </div>
-                            @if(!empty($selectedTags))
-                                <div class="flex flex-wrap gap-2">
-                                    <span class="text-sm text-gray-600 dark:text-gray-400">Filtering by:</span>
-                                    @foreach($selectedTags as $tag)
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                                            {{ $tag }}
-                                        </span>
-                                    @endforeach
-                                </div>
-                            @endif
-                        </form>
+                <div class="mb-6">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="text-sm font-medium text-gray-700 dark:text-gray-300 mr-2">Filter:</span>
+                        
+                        @foreach($allTags as $tag)
+                            @php
+                                $isActive = in_array($tag, $selectedTags);
+                                $currentParams = request()->query();
+                                
+                                if ($isActive) {
+                                    // Remove this tag from current selection
+                                    $newSelectedTags = array_diff($selectedTags, [$tag]);
+                                } else {
+                                    // Add this tag to current selection
+                                    $newSelectedTags = array_merge($selectedTags, [$tag]);
+                                }
+                                
+                                $currentParams['tags'] = $newSelectedTags;
+                                if (empty($newSelectedTags)) {
+                                    unset($currentParams['tags']);
+                                }
+                                
+                                $queryString = http_build_query($currentParams);
+                                $url = route('monitors.index') . ($queryString ? '?' . $queryString : '');
+                            @endphp
+                            
+                            <a href="{{ $url }}" 
+                               class="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium transition-colors duration-200 
+                                      {{ $isActive 
+                                         ? 'bg-blue-100 text-blue-800 hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-200 dark:hover:bg-blue-800' 
+                                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600' }}">
+                                @if($isActive)
+                                    <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                    </svg>
+                                @else
+                                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                    </svg>
+                                @endif
+                                {{ $tag }}
+                            </a>
+                        @endforeach
+
+                        @if(!empty($selectedTags))
+                            <a href="{{ route('monitors.index') }}" 
+                               class="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900 dark:text-red-200 dark:hover:bg-red-800 transition-colors duration-200 ml-2">
+                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                                Clear All
+                            </a>
+                        @endif
                     </div>
                 </div>
             @endif
