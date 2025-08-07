@@ -48,11 +48,27 @@ class ZabbixAlertJob implements ShouldQueue
                     ->first();
             }
             
+            // For malformed webhooks, try to match any existing host as a fallback
+            if (!$zabbixHost && ($zabbixHostId === null || $zabbixHostId === '') && ($hostName === null || $hostName === '')) {
+                Log::warning('Webhook has no valid host identification - checking for single host fallback');
+                
+                $allHosts = ZabbixHost::all();
+                if ($allHosts->count() === 1) {
+                    $zabbixHost = $allHosts->first();
+                    Log::info('Using single available Zabbix host as fallback', [
+                        'fallback_host' => $zabbixHost->name,
+                        'host_id' => $zabbixHost->zabbix_host_id
+                    ]);
+                }
+            }
+            
             if (!$zabbixHost) {
-                Log::info('Zabbix host not found locally, skipping alert', [
+                Log::warning('Zabbix host not found locally, skipping alert', [
                     'hostId' => $zabbixHostId,
                     'hostName' => $hostName,
-                    'available_data' => $this->eventData
+                    'webhook_data_has_nulls' => $this->hasNullValues($this->eventData),
+                    'available_hosts_count' => ZabbixHost::count(),
+                    'sample_data' => array_slice($this->eventData, 0, 3, true)
                 ]);
                 return;
             }
@@ -396,8 +412,27 @@ class ZabbixAlertJob implements ShouldQueue
                     $data['EVENT.TIME'] ?? 
                     null;
         
+        // Handle malformed timestamps like "undefinedTundefined"
+        if ($timestamp && is_string($timestamp) && str_contains($timestamp, 'undefined')) {
+            Log::warning('Malformed timestamp detected in webhook', [
+                'raw_timestamp' => $timestamp,
+                'using_fallback' => 'current time'
+            ]);
+            return now();
+        }
+        
         if ($timestamp && is_numeric($timestamp)) {
-            return now()->createFromTimestamp($timestamp);
+            // Handle future timestamps (like 1754545305) that might be malformed
+            $timestampNum = (int) $timestamp;
+            if ($timestampNum > time() + (365 * 24 * 3600)) { // More than a year in the future
+                Log::warning('Future timestamp detected, likely malformed', [
+                    'timestamp' => $timestampNum,
+                    'human_date' => date('Y-m-d H:i:s', $timestampNum),
+                    'using_fallback' => 'current time'
+                ]);
+                return now();
+            }
+            return now()->createFromTimestamp($timestampNum);
         }
         
         return now();
@@ -414,5 +449,20 @@ class ZabbixAlertJob implements ShouldQueue
             }
         }
         return $structure;
+    }
+    
+    private function hasNullValues(array $data): bool
+    {
+        $nullCount = 0;
+        $totalCount = 0;
+        
+        array_walk_recursive($data, function($value) use (&$nullCount, &$totalCount) {
+            $totalCount++;
+            if ($value === null || $value === '' || $value === 'null') {
+                $nullCount++;
+            }
+        });
+        
+        return $totalCount > 0 && ($nullCount / $totalCount) > 0.5; // More than 50% null values
     }
 }
