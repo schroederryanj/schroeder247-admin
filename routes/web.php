@@ -30,7 +30,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/monitors/check-all', [MonitorController::class, 'checkAll'])->name('monitors.check-all');
     
     // Zabbix hosts management
-    Route::resource('zabbix-hosts', ZabbixHostController::class)->except(['create', 'store', 'destroy']);
+    Route::resource('zabbix-hosts', ZabbixHostController::class)
+        ->except(['create', 'store', 'destroy'])
+        ->parameters(['zabbix-hosts' => 'zabbixHost']);
     Route::post('/zabbix-hosts/sync', [ZabbixHostController::class, 'sync'])->name('zabbix-hosts.sync');
     Route::post('/zabbix-hosts/test-connection', [ZabbixHostController::class, 'testConnection'])->name('zabbix-hosts.test-connection');
     Route::post('/zabbix-hosts/{zabbixHost}/acknowledge-event', [ZabbixHostController::class, 'acknowledgeEvent'])->name('zabbix-hosts.acknowledge-event');
