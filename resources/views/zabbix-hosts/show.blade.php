@@ -149,6 +149,45 @@
                                     <span class="text-sm text-gray-900 dark:text-gray-100">{{ $zabbixHost->notification_email }}</span>
                                 </div>
                             @endif
+
+                            <div class="border-t pt-4 mt-4">
+                                <div class="flex items-start justify-between">
+                                    <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Alert Severities</span>
+                                    <div class="text-right">
+                                        @php
+                                            $severitySettings = $zabbixHost->severity_settings ?? [];
+                                            $enabledSeverities = [];
+                                            foreach(['disaster', 'high', 'average', 'warning', 'information'] as $severity) {
+                                                if (($severitySettings[$severity] ?? ($severity === 'disaster' || $severity === 'high'))) {
+                                                    $enabledSeverities[] = $severity;
+                                                }
+                                            }
+                                        @endphp
+                                        
+                                        @if(count($enabledSeverities) > 0)
+                                            <div class="flex flex-wrap gap-1 justify-end">
+                                                @foreach($enabledSeverities as $severity)
+                                                    @php
+                                                        $severityColor = match($severity) {
+                                                            'disaster' => 'red-600',
+                                                            'high' => 'red-500',
+                                                            'average' => 'orange-500',
+                                                            'warning' => 'yellow-500',
+                                                            'information' => 'blue-500',
+                                                        };
+                                                    @endphp
+                                                    <span class="inline-flex items-center space-x-1 bg-{{ $severityColor }}/10 text-{{ $severityColor }} text-xs px-2 py-1 rounded-full">
+                                                        <span class="w-2 h-2 bg-{{ $severityColor }} rounded-full"></span>
+                                                        <span>{{ ucfirst($severity) }}</span>
+                                                    </span>
+                                                @endforeach
+                                            </div>
+                                        @else
+                                            <span class="text-xs text-gray-500 dark:text-gray-400">None configured</span>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -178,6 +217,58 @@
                                                 <span>Severity: {{ ucfirst($event->severity) }}</span>
                                                 <span>Event ID: {{ $event->zabbix_event_id }}</span>
                                                 <span>Started: {{ $event->created_at->diffForHumans() }}</span>
+                                            </div>
+                                        </div>
+                                        <span class="text-{{ $event->severity_color }}-600 text-sm font-medium">
+                                            {{ strtoupper($event->severity) }}
+                                        </span>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+            @endif
+
+            <!-- Event History -->
+            @if($zabbixHost->events->count() > 0)
+                <div class="mt-6 bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+                    <div class="p-6">
+                        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
+                            Event History ({{ $zabbixHost->events->count() }})
+                        </h3>
+                        
+                        <div class="space-y-3 max-h-96 overflow-y-auto">
+                            @foreach($zabbixHost->events as $event)
+                                <div class="border-l-4 border-{{ $event->severity_color }}-500 pl-4 py-2 bg-gray-50 dark:bg-gray-700 rounded-r">
+                                    <div class="flex items-start justify-between">
+                                        <div class="flex-1">
+                                            <div class="flex items-center space-x-2">
+                                                <span class="text-lg">{{ $event->severity_icon }}</span>
+                                                <span class="font-medium text-gray-900 dark:text-gray-100">{{ $event->name }}</span>
+                                                @if($event->status === 'problem')
+                                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200">
+                                                        ACTIVE
+                                                    </span>
+                                                @else
+                                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
+                                                        RESOLVED
+                                                    </span>
+                                                @endif
+                                            </div>
+                                            @if($event->description)
+                                                <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">{{ $event->description }}</p>
+                                            @endif
+                                            <div class="flex items-center space-x-4 text-xs text-gray-500 dark:text-gray-400 mt-2">
+                                                <span>Severity: {{ ucfirst($event->severity) }}</span>
+                                                <span>Event ID: {{ $event->zabbix_event_id }}</span>
+                                                <span>Started: {{ $event->event_time->format('M j, Y H:i') }}</span>
+                                                @if($event->recovery_time)
+                                                    <span>Resolved: {{ $event->recovery_time->format('M j, Y H:i') }}</span>
+                                                    <span>Duration: {{ $event->event_time->diffForHumans($event->recovery_time, true) }}</span>
+                                                @elseif($event->status === 'problem')
+                                                    <span>Duration: {{ $event->event_time->diffForHumans() }}</span>
+                                                @endif
                                             </div>
                                         </div>
                                         <span class="text-{{ $event->severity_color }}-600 text-sm font-medium">

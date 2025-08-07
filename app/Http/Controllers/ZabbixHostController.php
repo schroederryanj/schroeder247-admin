@@ -53,6 +53,8 @@ class ZabbixHostController extends Controller
             'notification_phone' => 'nullable|string|max:20',
             'email_notifications' => 'boolean', 
             'notification_email' => 'nullable|email|max:255',
+            'severity_settings' => 'nullable|array',
+            'severity_settings.*' => 'boolean',
         ]);
 
         $zabbixHost->update($validated);

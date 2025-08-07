@@ -24,12 +24,14 @@ class ZabbixHost extends Model
         'notification_phone',
         'email_notifications',
         'notification_email',
+        'severity_settings',
         'last_synced_at',
     ];
 
     protected $casts = [
         'interfaces' => 'array',
         'groups' => 'array',
+        'severity_settings' => 'array',
         'monitored' => 'boolean',
         'sms_notifications' => 'boolean',
         'email_notifications' => 'boolean',
