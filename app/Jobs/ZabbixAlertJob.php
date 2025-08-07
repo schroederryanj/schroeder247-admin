@@ -75,9 +75,19 @@ class ZabbixAlertJob implements ShouldQueue
 
             $eventId = $this->extractEventId($this->eventData);
             $triggerName = $this->extractTriggerName($this->eventData);
-            $severity = $this->mapSeverity($this->extractSeverity($this->eventData));
+            $rawSeverity = $this->extractSeverity($this->eventData);
+            $severity = $this->mapSeverity($rawSeverity);
             $status = $this->extractStatus($this->eventData);
             $eventTime = $this->extractEventTime($this->eventData);
+
+            Log::info('Processing Zabbix event details', [
+                'host' => $zabbixHost->name,
+                'raw_severity' => $rawSeverity,
+                'mapped_severity' => $severity,
+                'status' => $status,
+                'event_time' => $eventTime,
+                'host_severity_settings' => $zabbixHost->severity_settings
+            ]);
 
             $existingEvent = ZabbixEvent::where('zabbix_event_id', $eventId)->first();
             
@@ -353,13 +363,16 @@ class ZabbixAlertJob implements ShouldQueue
 
     private function mapSeverity(string $priority): string
     {
-        return match ($priority) {
-            '0' => 'not_classified',
-            '1' => 'information',
-            '2' => 'warning',
-            '3' => 'average',
-            '4' => 'high',
-            '5' => 'disaster',
+        // Handle both numeric and string priority values
+        $normalizedPriority = strtolower(trim($priority));
+        
+        return match ($normalizedPriority) {
+            '0', 'not_classified', 'not classified' => 'not_classified',
+            '1', 'information' => 'information',
+            '2', 'warning' => 'warning',
+            '3', 'average' => 'average',
+            '4', 'high' => 'high',
+            '5', 'disaster' => 'disaster',
             default => 'not_classified',
         };
     }
@@ -416,6 +429,7 @@ class ZabbixAlertJob implements ShouldQueue
                $data['severity'] ?? 
                $data['TRIGGER.SEVERITY'] ?? 
                $data['EVENT.SEVERITY'] ?? 
+               $data['trigger']['severity'] ?? 
                '0';
     }
 
