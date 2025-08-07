@@ -45,6 +45,7 @@ return [
         'url' => env('ZABBIX_URL'),
         'username' => env('ZABBIX_USERNAME'),
         'password' => env('ZABBIX_PASSWORD'),
+        'api_token' => env('ZABBIX_API_TOKEN'),
     ],
 
 ];
