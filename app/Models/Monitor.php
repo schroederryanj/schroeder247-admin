@@ -28,6 +28,7 @@ class Monitor extends Model
         'email_notifications',
         'notification_email',
         'notification_threshold',
+        'tags',
         'last_checked_at',
         'current_status',
         'last_notification_sent'
@@ -38,6 +39,7 @@ class Monitor extends Model
         'enabled' => 'boolean',
         'sms_notifications' => 'boolean',
         'email_notifications' => 'boolean',
+        'tags' => 'array',
         'last_checked_at' => 'datetime',
         'last_notification_sent' => 'datetime',
     ];

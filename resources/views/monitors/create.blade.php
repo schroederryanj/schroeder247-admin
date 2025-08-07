@@ -179,6 +179,15 @@
                                     <x-input-error :messages="$errors->get('notification_threshold')" class="mt-2" />
                                     <p class="text-sm text-gray-600 dark:text-gray-300 mt-1">Number of consecutive failed checks before sending an alert</p>
                                 </div>
+
+                                <div>
+                                    <x-input-label for="tags" :value="__('Tags')" />
+                                    <x-text-input id="tags" class="block mt-1 w-full" type="text" 
+                                                 name="tags" :value="old('tags')" 
+                                                 placeholder="production, web, critical (comma-separated)" />
+                                    <x-input-error :messages="$errors->get('tags')" class="mt-2" />
+                                    <p class="text-sm text-gray-600 dark:text-gray-300 mt-1">Add tags to help organize and filter your monitors</p>
+                                </div>
                             </div>
                         </div>
 

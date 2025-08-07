@@ -10,20 +10,54 @@ use Illuminate\Validation\Rule;
 
 class MonitorController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $monitors = Monitor::where('user_id', Auth::id())
-            ->orderBy('created_at', 'desc')
-            ->get();
+        $selectedTags = $request->get('tags', []);
+        if (is_string($selectedTags)) {
+            $selectedTags = [$selectedTags];
+        }
 
-        $zabbixHosts = ZabbixHost::where('user_id', Auth::id())
+        // Build monitor query
+        $monitorQuery = Monitor::where('user_id', Auth::id());
+        if (!empty($selectedTags)) {
+            foreach ($selectedTags as $tag) {
+                $monitorQuery->whereJsonContains('tags', $tag);
+            }
+        }
+        $monitors = $monitorQuery->orderBy('created_at', 'desc')->get();
+
+        // Build Zabbix hosts query
+        $zabbixHostQuery = ZabbixHost::where('user_id', Auth::id())
             ->with(['activeEvents' => function($query) {
                 $query->orderBy('severity', 'desc')->limit(3);
-            }])
-            ->orderBy('name')
-            ->get();
+            }]);
+        if (!empty($selectedTags)) {
+            foreach ($selectedTags as $tag) {
+                $zabbixHostQuery->whereJsonContains('tags', $tag);
+            }
+        }
+        $zabbixHosts = $zabbixHostQuery->orderBy('name')->get();
 
-        return view('monitors.index', compact('monitors', 'zabbixHosts'));
+        // Get all available tags for filter dropdown
+        $allMonitorTags = Monitor::where('user_id', Auth::id())
+            ->whereNotNull('tags')
+            ->pluck('tags')
+            ->flatten()
+            ->unique()
+            ->sort()
+            ->values();
+        
+        $allZabbixTags = ZabbixHost::where('user_id', Auth::id())
+            ->whereNotNull('tags')
+            ->pluck('tags')
+            ->flatten()
+            ->unique()
+            ->sort()
+            ->values();
+
+        $allTags = $allMonitorTags->merge($allZabbixTags)->unique()->sort()->values();
+
+        return view('monitors.index', compact('monitors', 'zabbixHosts', 'allTags', 'selectedTags'));
     }
 
     public function create()
@@ -65,8 +99,17 @@ class MonitorController extends Controller
             'notification_phone' => 'nullable|string|max:20',
             'email_notifications' => 'boolean',
             'notification_email' => 'nullable|email|max:255',
-            'notification_threshold' => 'required|integer|min:1|max:10'
+            'notification_threshold' => 'required|integer|min:1|max:10',
+            'tags' => 'nullable|string|max:500'
         ]);
+
+        // Process tags - convert comma-separated string to array
+        if (!empty($validated['tags'])) {
+            $validated['tags'] = array_map('trim', explode(',', $validated['tags']));
+            $validated['tags'] = array_filter($validated['tags']); // Remove empty values
+        } else {
+            $validated['tags'] = [];
+        }
 
         $validated['user_id'] = Auth::id();
         $validated['current_status'] = 'unknown';
@@ -144,8 +187,17 @@ class MonitorController extends Controller
             'notification_phone' => 'nullable|string|max:20',
             'email_notifications' => 'boolean',
             'notification_email' => 'nullable|email|max:255',
-            'notification_threshold' => 'required|integer|min:1|max:10'
+            'notification_threshold' => 'required|integer|min:1|max:10',
+            'tags' => 'nullable|string|max:500'
         ]);
+
+        // Process tags - convert comma-separated string to array
+        if (!empty($validated['tags'])) {
+            $validated['tags'] = array_map('trim', explode(',', $validated['tags']));
+            $validated['tags'] = array_filter($validated['tags']); // Remove empty values
+        } else {
+            $validated['tags'] = [];
+        }
 
         $monitor->update($validated);
 
