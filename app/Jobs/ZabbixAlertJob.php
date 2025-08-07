@@ -22,26 +22,46 @@ class ZabbixAlertJob implements ShouldQueue
     public function handle(): void
     {
         try {
-            $zabbixHostId = $this->eventData['host']['hostid'] ?? null;
+            Log::info('Processing Zabbix alert job', [
+                'data_keys' => array_keys($this->eventData),
+                'data_structure' => $this->getDataStructure($this->eventData)
+            ]);
+
+            // Extract data using flexible parsing
+            $zabbixHostId = $this->extractHostId($this->eventData);
+            $hostName = $this->extractHostName($this->eventData);
             
-            if (!$zabbixHostId) {
-                Log::warning('Zabbix alert missing host ID', ['data' => $this->eventData]);
+            if (!$zabbixHostId && !$hostName) {
+                Log::warning('Zabbix alert missing host ID and name', ['data' => $this->eventData]);
                 return;
             }
 
-            $zabbixHost = ZabbixHost::where('zabbix_host_id', $zabbixHostId)->first();
+            // Try to find host by ID first, then by name
+            $zabbixHost = null;
+            if ($zabbixHostId) {
+                $zabbixHost = ZabbixHost::where('zabbix_host_id', $zabbixHostId)->first();
+            }
+            
+            if (!$zabbixHost && $hostName) {
+                $zabbixHost = ZabbixHost::where('name', $hostName)
+                    ->orWhere('host', $hostName)
+                    ->first();
+            }
             
             if (!$zabbixHost) {
-                Log::info('Zabbix host not found locally, skipping alert', ['hostId' => $zabbixHostId]);
+                Log::info('Zabbix host not found locally, skipping alert', [
+                    'hostId' => $zabbixHostId,
+                    'hostName' => $hostName,
+                    'available_data' => $this->eventData
+                ]);
                 return;
             }
 
-            $eventId = $this->eventData['event']['eventid'] ?? uniqid('zabbix_');
-            $triggerName = $this->eventData['trigger']['name'] ?? 'Unknown trigger';
-            $severity = $this->mapSeverity($this->eventData['trigger']['priority'] ?? '0');
-            $status = $this->eventData['event']['value'] == '1' ? 'problem' : 'ok';
-            $eventTime = isset($this->eventData['event']['clock']) ? 
-                now()->createFromTimestamp($this->eventData['event']['clock']) : now();
+            $eventId = $this->extractEventId($this->eventData);
+            $triggerName = $this->extractTriggerName($this->eventData);
+            $severity = $this->mapSeverity($this->extractSeverity($this->eventData));
+            $status = $this->extractStatus($this->eventData);
+            $eventTime = $this->extractEventTime($this->eventData);
 
             $existingEvent = ZabbixEvent::where('zabbix_event_id', $eventId)->first();
             
@@ -293,5 +313,106 @@ class ZabbixAlertJob implements ShouldQueue
             '5' => 'disaster',
             default => 'not_classified',
         };
+    }
+
+    private function extractHostId(array $data): ?string
+    {
+        // Try various possible locations for host ID
+        return $data['host']['hostid'] ?? 
+               $data['hostid'] ?? 
+               $data['HOST.ID'] ?? 
+               $data['host_id'] ?? 
+               null;
+    }
+
+    private function extractHostName(array $data): ?string
+    {
+        // Try various possible locations for host name
+        return $data['host']['name'] ?? 
+               $data['host']['host'] ?? 
+               $data['hostname'] ?? 
+               $data['host_name'] ?? 
+               $data['HOSTNAME'] ?? 
+               $data['HOST.NAME'] ?? 
+               null;
+    }
+
+    private function extractEventId(array $data): string
+    {
+        // Try various possible locations for event ID
+        return $data['event']['eventid'] ?? 
+               $data['eventid'] ?? 
+               $data['EVENT.ID'] ?? 
+               $data['event_id'] ?? 
+               uniqid('zabbix_');
+    }
+
+    private function extractTriggerName(array $data): string
+    {
+        // Try various possible locations for trigger name
+        return $data['trigger']['name'] ?? 
+               $data['trigger_name'] ?? 
+               $data['TRIGGER.NAME'] ?? 
+               $data['trigger']['description'] ?? 
+               $data['item_name'] ?? 
+               $data['ITEM.NAME'] ?? 
+               'Unknown trigger';
+    }
+
+    private function extractSeverity(array $data): string
+    {
+        // Try various possible locations for severity/priority
+        return $data['trigger']['priority'] ?? 
+               $data['priority'] ?? 
+               $data['severity'] ?? 
+               $data['TRIGGER.SEVERITY'] ?? 
+               $data['EVENT.SEVERITY'] ?? 
+               '0';
+    }
+
+    private function extractStatus(array $data): string
+    {
+        // Try various possible locations for event status
+        $value = $data['event']['value'] ?? 
+                 $data['value'] ?? 
+                 $data['status'] ?? 
+                 $data['EVENT.VALUE'] ?? 
+                 $data['trigger']['status'] ?? 
+                 null;
+        
+        if ($value === null) {
+            return 'problem'; // Default to problem if we can't determine
+        }
+        
+        return ($value == '1' || $value === 'problem') ? 'problem' : 'ok';
+    }
+
+    private function extractEventTime(array $data): \Carbon\Carbon
+    {
+        // Try various possible locations for event time
+        $timestamp = $data['event']['clock'] ?? 
+                    $data['clock'] ?? 
+                    $data['timestamp'] ?? 
+                    $data['EVENT.TIME'] ?? 
+                    null;
+        
+        if ($timestamp && is_numeric($timestamp)) {
+            return now()->createFromTimestamp($timestamp);
+        }
+        
+        return now();
+    }
+
+    private function getDataStructure(array $data, int $maxDepth = 2): array
+    {
+        $structure = [];
+        foreach ($data as $key => $value) {
+            if (is_array($value) && $maxDepth > 0) {
+                $structure[$key] = $this->getDataStructure($value, $maxDepth - 1);
+            } else {
+                $structure[$key] = gettype($value);
+            }
+        }
+        return $structure;
     }
 }
