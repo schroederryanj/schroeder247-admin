@@ -129,3 +129,54 @@ Add this to Cloudways Cron Job Management:
 
 ### Queue Worker Setup
 Supervisor configuration needed for queue processing (monitors and SMS)
+
+## Git Development Workflow
+
+### IMPORTANT: Always Follow Git Best Practices
+
+**NEVER commit directly to the main branch.** Always create a feature branch first, then create a pull request for review and merging.
+
+#### Required Git Workflow:
+1. **Create a feature branch** for any changes:
+   ```bash
+   git checkout -b feature/descriptive-name
+   # or
+   git checkout -b fix/issue-description
+   # or  
+   git checkout -b chore/task-description
+   ```
+
+2. **Make your changes** and commit to the feature branch:
+   ```bash
+   git add .
+   git commit -m "Descriptive commit message"
+   ```
+
+3. **Push the feature branch**:
+   ```bash
+   git push -u origin feature/descriptive-name
+   ```
+
+4. **Create a pull request** using GitHub CLI:
+   ```bash
+   gh pr create --title "PR Title" --body "Description of changes"
+   ```
+
+5. **Merge the pull request** after review:
+   ```bash
+   gh pr merge --squash  # or --merge or --rebase
+   ```
+
+#### Branch Naming Conventions:
+- `feature/` - New features or enhancements
+- `fix/` - Bug fixes
+- `chore/` - Maintenance tasks, refactoring, or updates
+- `hotfix/` - Critical production fixes
+
+#### Examples:
+- `feature/unified-monitoring-interface`
+- `fix/zabbix-route-parameter-binding`
+- `chore/update-documentation`
+- `hotfix/critical-security-patch`
+
+**This workflow ensures proper code review, maintains a clean commit history, and follows industry best practices for collaborative development.**
