@@ -129,6 +129,16 @@ class ZabbixAlertJob implements ShouldQueue
 
     private function sendProblemNotification(ZabbixHost $zabbixHost, ZabbixEvent $event): void
     {
+        // Check if the event severity should trigger notifications
+        if (!$this->shouldNotifyForSeverity($zabbixHost, $event->severity)) {
+            Log::info('Skipping notification due to severity settings', [
+                'host' => $zabbixHost->name,
+                'severity' => $event->severity,
+                'settings' => $zabbixHost->severity_settings
+            ]);
+            return;
+        }
+
         if ($zabbixHost->sms_notifications && $zabbixHost->notification_phone) {
             $this->sendSMSAlert($zabbixHost, $event);
         }
@@ -140,6 +150,16 @@ class ZabbixAlertJob implements ShouldQueue
 
     private function sendRecoveryNotification(ZabbixHost $zabbixHost, ZabbixEvent $event): void
     {
+        // Check if the event severity should trigger recovery notifications
+        if (!$this->shouldNotifyForSeverity($zabbixHost, $event->severity)) {
+            Log::info('Skipping recovery notification due to severity settings', [
+                'host' => $zabbixHost->name,
+                'severity' => $event->severity,
+                'settings' => $zabbixHost->severity_settings
+            ]);
+            return;
+        }
+
         if ($zabbixHost->sms_notifications && $zabbixHost->notification_phone) {
             $this->sendSMSRecoveryAlert($zabbixHost, $event);
         }
@@ -316,6 +336,19 @@ class ZabbixAlertJob implements ShouldQueue
                 'error' => $e->getMessage()
             ]);
         }
+    }
+
+    private function shouldNotifyForSeverity(ZabbixHost $zabbixHost, string $severity): bool
+    {
+        $severitySettings = $zabbixHost->severity_settings;
+        
+        // If no severity settings configured, default to disaster and high only
+        if (!$severitySettings) {
+            return in_array($severity, ['disaster', 'high']);
+        }
+        
+        // Check if this severity level is enabled
+        return isset($severitySettings[$severity]) && $severitySettings[$severity];
     }
 
     private function mapSeverity(string $priority): string
