@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\LogsController;
 use App\Http\Controllers\MonitorController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SMSController;
@@ -36,6 +37,12 @@ Route::middleware('auth')->group(function () {
     Route::post('/zabbix-hosts/sync', [ZabbixHostController::class, 'sync'])->name('zabbix-hosts.sync');
     Route::post('/zabbix-hosts/test-connection', [ZabbixHostController::class, 'testConnection'])->name('zabbix-hosts.test-connection');
     Route::post('/zabbix-hosts/{zabbixHost}/acknowledge-event', [ZabbixHostController::class, 'acknowledgeEvent'])->name('zabbix-hosts.acknowledge-event');
+    
+    // Logs management
+    Route::get('/logs', [LogsController::class, 'index'])->name('logs.index');
+    Route::get('/logs/download', [LogsController::class, 'download'])->name('logs.download');
+    Route::post('/logs/clear', [LogsController::class, 'clear'])->name('logs.clear');
+    Route::get('/logs/api', [LogsController::class, 'api'])->name('logs.api');
 });
 
 require __DIR__.'/auth.php';
