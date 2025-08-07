@@ -10,6 +10,7 @@ use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
 use Twilio\Rest\Client as TwilioClient;
 use Exception;
+use Throwable;
 
 class ZabbixAlertJob implements ShouldQueue
 {
@@ -21,6 +22,12 @@ class ZabbixAlertJob implements ShouldQueue
 
     public function handle(): void
     {
+        Log::info('ZabbixAlertJob::handle() - Starting job execution', [
+            'job_id' => $this->job?->getJobId(),
+            'queue' => $this->job?->getQueue(),
+            'data_keys' => array_keys($this->eventData)
+        ]);
+
         try {
             Log::info('Processing Zabbix alert job', [
                 'data_keys' => array_keys($this->eventData),
@@ -30,6 +37,11 @@ class ZabbixAlertJob implements ShouldQueue
             // Extract data using flexible parsing
             $zabbixHostId = $this->extractHostId($this->eventData);
             $hostName = $this->extractHostName($this->eventData);
+            
+            Log::info('Extracted host identifiers', [
+                'zabbix_host_id' => $zabbixHostId,
+                'host_name' => $hostName
+            ]);
             
             if (!$zabbixHostId && !$hostName) {
                 Log::warning('Zabbix alert missing host ID and name', ['data' => $this->eventData]);
@@ -63,15 +75,26 @@ class ZabbixAlertJob implements ShouldQueue
             }
             
             if (!$zabbixHost) {
+                $allHosts = ZabbixHost::select('id', 'zabbix_host_id', 'name', 'host')->get();
                 Log::warning('Zabbix host not found locally, skipping alert', [
                     'hostId' => $zabbixHostId,
                     'hostName' => $hostName,
                     'webhook_data_has_nulls' => $this->hasNullValues($this->eventData),
                     'available_hosts_count' => ZabbixHost::count(),
+                    'available_hosts' => $allHosts->toArray(),
                     'sample_data' => array_slice($this->eventData, 0, 3, true)
                 ]);
                 return;
             }
+
+            Log::info('Found Zabbix host in database', [
+                'host_id' => $zabbixHost->id,
+                'zabbix_host_id' => $zabbixHost->zabbix_host_id,
+                'name' => $zabbixHost->name,
+                'sms_notifications' => $zabbixHost->sms_notifications,
+                'email_notifications' => $zabbixHost->email_notifications,
+                'severity_settings' => $zabbixHost->severity_settings
+            ]);
 
             $eventId = $this->extractEventId($this->eventData);
             $triggerName = $this->extractTriggerName($this->eventData);
@@ -131,10 +154,22 @@ class ZabbixAlertJob implements ShouldQueue
         } catch (Exception $e) {
             Log::error('Failed to process Zabbix alert', [
                 'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
                 'data' => $this->eventData
             ]);
             throw $e;
         }
+        
+        Log::info('ZabbixAlertJob::handle() - Job execution completed');
+    }
+    
+    public function failed(Throwable $exception): void
+    {
+        Log::error('ZabbixAlertJob failed', [
+            'error' => $exception->getMessage(),
+            'trace' => $exception->getTraceAsString(),
+            'data' => $this->eventData
+        ]);
     }
 
     private function sendProblemNotification(ZabbixHost $zabbixHost, ZabbixEvent $event): void
