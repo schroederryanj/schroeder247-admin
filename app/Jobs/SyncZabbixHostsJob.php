@@ -100,7 +100,9 @@ class SyncZabbixHostsJob implements ShouldQueue
     {
         try {
             $problems = $zabbixService->getProblems($zabbixHostId);
+            $activeEventIds = [];
             
+            // Process current active problems
             foreach ($problems as $problemData) {
                 $eventId = $problemData['eventid'];
                 $trigger = $problemData['triggers'][0] ?? null;
@@ -108,6 +110,8 @@ class SyncZabbixHostsJob implements ShouldQueue
                 if (!$trigger) {
                     continue;
                 }
+
+                $activeEventIds[] = $eventId;
 
                 $existingEvent = \App\Models\ZabbixEvent::where('zabbix_event_id', $eventId)->first();
                 
@@ -125,8 +129,33 @@ class SyncZabbixHostsJob implements ShouldQueue
                         'acknowledged' => $problemData['acknowledged'] == '1',
                         'raw_data' => $problemData,
                     ]);
+                } else {
+                    // Update existing event to ensure it's marked as active problem
+                    $existingEvent->update([
+                        'status' => 'problem',
+                        'acknowledged' => $problemData['acknowledged'] == '1',
+                        'raw_data' => $problemData,
+                    ]);
                 }
             }
+
+            // Mark events that are no longer active problems as resolved
+            \App\Models\ZabbixEvent::where('zabbix_host_id', $hostRecord->id)
+                ->where('status', 'problem')
+                ->whereNotIn('zabbix_event_id', $activeEventIds)
+                ->update([
+                    'status' => 'resolved',
+                    'recovery_time' => now(),
+                ]);
+
+            Log::debug('Synced events for host', [
+                'host_name' => $hostRecord->name,
+                'active_problems' => count($activeEventIds),
+                'resolved_count' => \App\Models\ZabbixEvent::where('zabbix_host_id', $hostRecord->id)
+                    ->where('status', 'resolved')
+                    ->where('recovery_time', '>=', now()->subMinutes(5))
+                    ->count()
+            ]);
 
         } catch (Exception $e) {
             Log::warning('Failed to sync events for host', [
