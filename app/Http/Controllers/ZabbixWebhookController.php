@@ -65,12 +65,25 @@ class ZabbixWebhookController extends Controller
                 // In production, you might want to be more lenient to avoid missing alerts
             }
 
-            ZabbixAlertJob::dispatch($eventData);
-
-            Log::info('Zabbix alert job dispatched successfully', [
-                'validation_passed' => $isValid,
-                'data_keys' => array_keys($eventData)
-            ]);
+            // Try both queue and sync dispatch for debugging
+            try {
+                ZabbixAlertJob::dispatch($eventData);
+                Log::info('Zabbix alert job queued successfully', [
+                    'validation_passed' => $isValid,
+                    'data_keys' => array_keys($eventData),
+                    'queue_connection' => config('queue.default')
+                ]);
+                
+                // Also try sync dispatch for immediate processing
+                ZabbixAlertJob::dispatchSync($eventData);
+                Log::info('Zabbix alert job sync executed successfully');
+                
+            } catch (Exception $jobException) {
+                Log::error('Failed to dispatch Zabbix alert job', [
+                    'error' => $jobException->getMessage(),
+                    'trace' => $jobException->getTraceAsString()
+                ]);
+            }
             
             return response('OK', 200);
 
