@@ -114,7 +114,13 @@
 
                         <!-- Notification Settings -->
                         <div class="border-t pt-6">
-                            <h3 class="text-lg font-medium text-gray-900 mb-4">Notification Settings</h3>
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-medium text-gray-900">Notification Settings</h3>
+                                <button type="button" id="use-profile-defaults" 
+                                        class="bg-blue-100 hover:bg-blue-200 text-blue-800 text-sm font-medium px-3 py-1.5 rounded-lg border border-blue-300">
+                                    📋 Use Profile Defaults
+                                </button>
+                            </div>
                             
                             <div class="space-y-4">
                                 <!-- SMS Notifications -->
@@ -133,7 +139,7 @@
                                         <div class="mt-2" id="sms-phone-field" style="display: none;">
                                             <x-input-label for="notification_phone" :value="__('Phone Number')" />
                                             <x-text-input id="notification_phone" class="block mt-1 w-full" type="tel" 
-                                                         name="notification_phone" :value="old('notification_phone')" 
+                                                         name="notification_phone" :value="old('notification_phone', auth()->user()->phone_number)" 
                                                          placeholder="+1234567890" />
                                             <x-input-error :messages="$errors->get('notification_phone')" class="mt-2" />
                                             <p class="text-sm text-gray-600 dark:text-gray-300 mt-1">Include country code (e.g., +1 for US)</p>
@@ -157,7 +163,7 @@
                                         <div class="mt-2" id="email-field" style="display: none;">
                                             <x-input-label for="notification_email" :value="__('Email Address')" />
                                             <x-text-input id="notification_email" class="block mt-1 w-full" type="email" 
-                                                         name="notification_email" :value="old('notification_email')" 
+                                                         name="notification_email" :value="old('notification_email', auth()->user()->email)" 
                                                          placeholder="you@example.com" />
                                             <x-input-error :messages="$errors->get('notification_email')" class="mt-2" />
                                         </div>
@@ -200,6 +206,9 @@
             const emailCheckbox = document.getElementById('email_notifications');
             const smsPhoneField = document.getElementById('sms-phone-field');
             const emailField = document.getElementById('email-field');
+            const useProfileDefaultsBtn = document.getElementById('use-profile-defaults');
+            const phoneInput = document.getElementById('notification_phone');
+            const emailInput = document.getElementById('notification_email');
             
             function toggleFields() {
                 const selectedType = typeSelect.value;
@@ -235,9 +244,41 @@
                 }
             }
             
+            function useProfileDefaults() {
+                // Set profile defaults
+                const userEmail = '{{ auth()->user()->email }}';
+                const userPhone = '{{ auth()->user()->phone_number ?? '' }}';
+                
+                // Enable notifications if user has contact info
+                if (userEmail) {
+                    emailCheckbox.checked = true;
+                    emailInput.value = userEmail;
+                }
+                
+                if (userPhone) {
+                    smsCheckbox.checked = true;
+                    phoneInput.value = userPhone;
+                }
+                
+                // Update field visibility
+                toggleNotificationFields();
+                
+                // Show success feedback
+                useProfileDefaultsBtn.innerHTML = '✓ Applied!';
+                useProfileDefaultsBtn.classList.remove('bg-blue-100', 'hover:bg-blue-200', 'text-blue-800', 'border-blue-300');
+                useProfileDefaultsBtn.classList.add('bg-green-100', 'text-green-800', 'border-green-300');
+                
+                setTimeout(() => {
+                    useProfileDefaultsBtn.innerHTML = '📋 Use Profile Defaults';
+                    useProfileDefaultsBtn.classList.remove('bg-green-100', 'text-green-800', 'border-green-300');
+                    useProfileDefaultsBtn.classList.add('bg-blue-100', 'hover:bg-blue-200', 'text-blue-800', 'border-blue-300');
+                }, 2000);
+            }
+            
             typeSelect.addEventListener('change', toggleFields);
             smsCheckbox.addEventListener('change', toggleNotificationFields);
             emailCheckbox.addEventListener('change', toggleNotificationFields);
+            useProfileDefaultsBtn.addEventListener('click', useProfileDefaults);
             
             toggleFields(); // Initial call
             toggleNotificationFields(); // Initial call
