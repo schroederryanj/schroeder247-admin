@@ -4,13 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Jobs\ZabbixAlertJob;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 use Exception;
 
 class ZabbixWebhookController extends Controller
 {
-    public function handleAlert(Request $request): Response
+    public function handleAlert(Request $request)
     {
         try {
             Log::info('Zabbix webhook received', ['data' => $request->all()]);
