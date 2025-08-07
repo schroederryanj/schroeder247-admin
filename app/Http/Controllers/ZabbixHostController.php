@@ -79,11 +79,13 @@ class ZabbixHostController extends Controller
                     ->with('error', 'Failed to connect to Zabbix server: ' . $connectionTest['message']);
             }
 
-            SyncZabbixHostsJob::dispatch(auth()->id());
+            // Run sync job directly instead of queuing for immediate results
+            $job = new SyncZabbixHostsJob(auth()->id());
+            $job->handle();
 
             return redirect()
                 ->back()
-                ->with('success', 'Zabbix host synchronization started. This may take a few minutes to complete.');
+                ->with('success', 'Zabbix hosts synchronized successfully!');
 
         } catch (\Exception $e) {
             Log::error('Manual Zabbix sync failed', ['error' => $e->getMessage()]);
