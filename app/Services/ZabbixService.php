@@ -141,7 +141,7 @@ class ZabbixService
                 'source' => 0,
                 'object' => 0,
                 'recent' => true,
-                'sortfield' => 'clock',
+                'sortfield' => 'eventid',
                 'sortorder' => 'DESC',
                 'limit' => 100,
             ];
