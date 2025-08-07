@@ -72,7 +72,7 @@ class ZabbixHostController extends Controller
         $zabbixHost->update($validated);
 
         return redirect()
-            ->route('zabbix-hosts.index')
+            ->route('monitors.index')
             ->with('success', 'Zabbix host notification settings updated successfully.');
     }
 
