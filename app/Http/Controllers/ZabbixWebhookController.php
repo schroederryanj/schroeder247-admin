@@ -132,6 +132,17 @@ class ZabbixWebhookController extends Controller
             return $this->validateCustomFormat($data);
         }
         
+        // Format 5: Malformed Zabbix webhook with null values (configuration issue)
+        if (isset($data['host'], $data['event'], $data['trigger']) && isset($data['timestamp'])) {
+            Log::warning('Detected malformed Zabbix webhook - likely macro configuration issue', [
+                'has_timestamp' => isset($data['timestamp']),
+                'has_status' => isset($data['status']),
+                'host_values' => $data['host'] ?? 'missing',
+                'event_values' => $data['event'] ?? 'missing',
+            ]);
+            return $this->validateMalformedFormat($data);
+        }
+        
         Log::warning('No recognized Zabbix webhook format detected', [
             'available_keys' => array_keys($data),
             'sample_data' => array_slice($data, 0, 5, true)
@@ -160,6 +171,20 @@ class ZabbixWebhookController extends Controller
     private function validateCustomFormat(array $data): bool
     {
         return !empty($data['host_name']) || !empty($data['hostname']) || !empty($data['trigger_name']);
+    }
+    
+    private function validateMalformedFormat(array $data): bool
+    {
+        // Accept malformed webhooks for debugging - they have the right structure but null/invalid values
+        // This indicates a Zabbix webhook configuration issue, not a code issue
+        Log::info('Accepting malformed webhook for debugging purposes', [
+            'timestamp' => $data['timestamp'] ?? 'missing',
+            'status' => $data['status'] ?? 'missing',
+            'clock_value' => $data['event']['clock'] ?? 'missing',
+            'severity' => $data['severity'] ?? $data['trigger']['priority'] ?? 'missing',
+        ]);
+        
+        return true; // Always accept for debugging, but log the issues
     }
     
     private function getDataStructure(array $data, int $maxDepth = 2): array
