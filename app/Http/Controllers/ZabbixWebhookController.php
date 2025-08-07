@@ -42,7 +42,7 @@ class ZabbixWebhookController extends Controller
         }
     }
 
-    public function test(Request $request): Response
+    public function test(Request $request)
     {
         Log::info('Zabbix webhook test endpoint called', ['data' => $request->all()]);
         

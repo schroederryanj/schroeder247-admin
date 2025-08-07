@@ -21,7 +21,8 @@
       "Bash(gh run view:*)",
       "Bash(npm run build:*)",
       "Bash(rm:*)",
-      "WebFetch(domain:www.zabbix.com)"
+      "WebFetch(domain:www.zabbix.com)",
+      "Bash(git branch:*)"
     ],
     "deny": []
   }
