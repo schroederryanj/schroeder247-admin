@@ -41,4 +41,10 @@ return [
         'phone_number' => env('TWILIO_FROM'),
     ],
 
+    'zabbix' => [
+        'url' => env('ZABBIX_URL'),
+        'username' => env('ZABBIX_USERNAME'),
+        'password' => env('ZABBIX_PASSWORD'),
+    ],
+
 ];

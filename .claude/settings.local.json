@@ -20,7 +20,8 @@
       "Bash(gh run list:*)",
       "Bash(gh run view:*)",
       "Bash(npm run build:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "WebFetch(domain:www.zabbix.com)"
     ],
     "deny": []
   }
