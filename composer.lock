@@ -4,8 +4,59 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "4f8cf027e33ddc9d58e6303e41e2f399",
+    "content-hash": "c369b4b8debf3bf06e83101476e02ab8",
     "packages": [
+        {
+            "name": "becker/laravel-zabbix-api",
+            "version": "0.3.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/becker/laravel-zabbix-api.git",
+                "reference": "2741e6e4e36e486d39ca20edeac246458e7429c8"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/becker/laravel-zabbix-api/zipball/2741e6e4e36e486d39ca20edeac246458e7429c8",
+                "reference": "2741e6e4e36e486d39ca20edeac246458e7429c8",
+                "shasum": ""
+            },
+            "require-dev": {
+                "phpunit/phpunit": "~5.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Becker\\Zabbix\\ZabbixServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Becker\\Zabbix\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Vinicius Becker",
+                    "email": "vinicius@becker.eti.br"
+                }
+            ],
+            "description": "This package provides a Zabbix API library for Laravel Framework",
+            "keywords": [
+                "laravel",
+                "zabbix"
+            ],
+            "support": {
+                "issues": "https://github.com/becker/laravel-zabbix-api/issues",
+                "source": "https://github.com/becker/laravel-zabbix-api/tree/0.3.0"
+            },
+            "time": "2018-02-11T02:17:50+00:00"
+        },
         {
             "name": "brick/math",
             "version": "0.13.1",

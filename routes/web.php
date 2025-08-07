@@ -4,6 +4,8 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\MonitorController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SMSController;
+use App\Http\Controllers\ZabbixWebhookController;
+use App\Http\Controllers\ZabbixHostController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -26,6 +28,12 @@ Route::middleware('auth')->group(function () {
     
     // Check all monitors
     Route::post('/monitors/check-all', [MonitorController::class, 'checkAll'])->name('monitors.check-all');
+    
+    // Zabbix hosts management
+    Route::resource('zabbix-hosts', ZabbixHostController::class)->except(['create', 'store', 'destroy']);
+    Route::post('/zabbix-hosts/sync', [ZabbixHostController::class, 'sync'])->name('zabbix-hosts.sync');
+    Route::post('/zabbix-hosts/test-connection', [ZabbixHostController::class, 'testConnection'])->name('zabbix-hosts.test-connection');
+    Route::post('/zabbix-hosts/{zabbixHost}/acknowledge-event', [ZabbixHostController::class, 'acknowledgeEvent'])->name('zabbix-hosts.acknowledge-event');
 });
 
 require __DIR__.'/auth.php';
@@ -53,6 +61,11 @@ Route::get('/sms/test', function () {
 
 // SMS webhook endpoint (fallback for web routes if API routes don't work)
 Route::post('/sms/webhook', [SMSController::class, 'handleIncomingMessage'])->name('sms.webhook.fallback');
+
+// Zabbix webhook endpoints
+Route::post('/zabbix/webhook', [ZabbixWebhookController::class, 'handleAlert'])->name('zabbix.webhook');
+Route::get('/zabbix/webhook/test', [ZabbixWebhookController::class, 'test'])->name('zabbix.webhook.test');
+Route::post('/zabbix/webhook/test', [ZabbixWebhookController::class, 'test'])->name('zabbix.webhook.test.post');
 
 // Deployment webhook (secured with secret)
 Route::post('/deploy', [\App\Http\Controllers\DeploymentController::class, 'deploy'])->name('deploy.webhook');
