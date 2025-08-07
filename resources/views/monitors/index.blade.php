@@ -47,38 +47,73 @@
                 </div>
             @endif
 
-            <!-- Tabs Navigation -->
-            <div class="mb-6">
-                <nav class="flex space-x-8">
-                    <button type="button" onclick="showTab('monitors')" id="monitors-tab" 
-                            class="tab-button active py-2 px-1 border-b-2 font-medium text-sm">
-                        Custom Monitors ({{ $monitors->count() }})
-                    </button>
-                    <button type="button" onclick="showTab('zabbix')" id="zabbix-tab" 
-                            class="tab-button py-2 px-1 border-b-2 font-medium text-sm">
-                        Zabbix Hosts ({{ $zabbixHosts->count() }})
-                    </button>
-                </nav>
+            <!-- Summary Stats -->
+            <div class="mb-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-600">
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-blue-600">{{ $monitors->count() }}</div>
+                        <div class="text-sm text-gray-500 dark:text-gray-400">Custom Monitors</div>
+                    </div>
+                </div>
+                <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-600">
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-purple-600">{{ $zabbixHosts->count() }}</div>
+                        <div class="text-sm text-gray-500 dark:text-gray-400">Zabbix Hosts</div>
+                    </div>
+                </div>
+                <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-600">
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-green-600">
+                            {{ $monitors->where('current_status', 'up')->count() + $zabbixHosts->where('status', 'monitored')->filter(fn($h) => !$h->is_down)->count() }}
+                        </div>
+                        <div class="text-sm text-gray-500 dark:text-gray-400">All OK</div>
+                    </div>
+                </div>
+                <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-600">
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-red-600">
+                            {{ $monitors->whereIn('current_status', ['down', 'warning'])->count() + $zabbixHosts->filter(fn($h) => $h->is_down)->count() }}
+                        </div>
+                        <div class="text-sm text-gray-500 dark:text-gray-400">Issues</div>
+                    </div>
+                </div>
             </div>
 
-            <!-- Custom Monitors Tab -->
-            <div id="monitors-content" class="tab-content bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+            <!-- Unified Monitoring Grid -->
+            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900 dark:text-gray-100">
-                    @if($monitors->isEmpty())
+                    @if($monitors->isEmpty() && $zabbixHosts->isEmpty())
                         <div class="text-center py-8">
                             <div class="text-gray-400 text-6xl mb-4">📊</div>
-                            <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No custom monitors yet</h3>
-                            <p class="text-gray-500 dark:text-gray-400 mb-4">Get started by adding your first monitor to track uptime.</p>
-                            <a href="{{ route('monitors.create') }}" 
-                               class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                                Add Your First Monitor
-                            </a>
+                            <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No monitoring configured</h3>
+                            <p class="text-gray-500 dark:text-gray-400 mb-4">Get started by adding custom monitors or syncing Zabbix hosts.</p>
+                            <div class="flex justify-center space-x-4">
+                                <a href="{{ route('monitors.create') }}" 
+                                   class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                                    Add Custom Monitor
+                                </a>
+                                <form action="{{ route('zabbix-hosts.sync') }}" method="POST" class="inline">
+                                    @csrf
+                                    <button type="submit" 
+                                            class="bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded">
+                                        Sync Zabbix Hosts
+                                    </button>
+                                </form>
+                            </div>
                         </div>
                     @else
                         <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                            <!-- Custom Monitors -->
                             @foreach($monitors as $monitor)
-                                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
-                                    <div class="flex items-center justify-between mb-2">
+                                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600 relative">
+                                    <!-- Custom Monitor Tag -->
+                                    <div class="absolute top-3 right-3">
+                                        <span class="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs px-2 py-1 rounded-full font-medium">
+                                            CUSTOM
+                                        </span>
+                                    </div>
+                                    
+                                    <div class="flex items-center justify-between mb-2 pr-16">
                                         <h3 class="font-semibold text-lg text-gray-900 dark:text-gray-100">{{ $monitor->name }}</h3>
                                         <div class="flex items-center space-x-1">
                                             @if($monitor->current_status === 'up')
@@ -132,34 +167,18 @@
                                     </div>
                                 </div>
                             @endforeach
-                        </div>
-                    @endif
-                </div>
-            </div>
 
-            <!-- Zabbix Hosts Tab -->
-            <div id="zabbix-content" class="tab-content hidden bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 text-gray-900 dark:text-gray-100">
-                    @if($zabbixHosts->isEmpty())
-                        <div class="text-center py-8">
-                            <div class="text-gray-400 text-6xl mb-4">🖥️</div>
-                            <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No Zabbix hosts found</h3>
-                            <p class="text-gray-500 dark:text-gray-400 mb-4">
-                                Configure your Zabbix server connection and sync hosts to get started.
-                            </p>
-                            <form action="{{ route('zabbix-hosts.sync') }}" method="POST" class="inline">
-                                @csrf
-                                <button type="submit" 
-                                        class="bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded">
-                                    Sync Zabbix Hosts
-                                </button>
-                            </form>
-                        </div>
-                    @else
-                        <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                            <!-- Zabbix Hosts -->
                             @foreach($zabbixHosts as $host)
-                                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
-                                    <div class="flex items-center justify-between mb-2">
+                                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600 relative">
+                                    <!-- Zabbix Tag -->
+                                    <div class="absolute top-3 right-3">
+                                        <span class="bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 text-xs px-2 py-1 rounded-full font-medium">
+                                            ZABBIX
+                                        </span>
+                                    </div>
+                                    
+                                    <div class="flex items-center justify-between mb-2 pr-16">
                                         <h3 class="font-semibold text-lg text-gray-900 dark:text-gray-100">{{ $host->name }}</h3>
                                         <div class="flex items-center space-x-1">
                                             @if($host->is_down)
@@ -244,41 +263,6 @@
                     @endif
                 </div>
             </div>
-
-            <style>
-            .tab-button.active {
-                border-color: #3B82F6;
-                color: #3B82F6;
-            }
-            .tab-button:not(.active) {
-                border-color: transparent;
-                color: #6B7280;
-            }
-            .tab-button:not(.active):hover {
-                color: #374151;
-                border-color: #D1D5DB;
-            }
-            </style>
-
-            <script>
-            function showTab(tabName) {
-                // Hide all tab contents
-                document.querySelectorAll('.tab-content').forEach(content => {
-                    content.classList.add('hidden');
-                });
-                
-                // Remove active class from all tabs
-                document.querySelectorAll('.tab-button').forEach(button => {
-                    button.classList.remove('active');
-                });
-                
-                // Show selected tab content
-                document.getElementById(tabName + '-content').classList.remove('hidden');
-                
-                // Add active class to selected tab
-                document.getElementById(tabName + '-tab').classList.add('active');
-            }
-            </script>
         </div>
     </div>
 </x-app-layout>
