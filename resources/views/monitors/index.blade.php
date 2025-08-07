@@ -105,45 +105,55 @@
                         <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                             <!-- Custom Monitors -->
                             @foreach($monitors as $monitor)
-                                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600 relative">
-                                    <!-- Custom Monitor Tag -->
-                                    <div class="absolute top-3 right-3">
-                                        <span class="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs px-2 py-1 rounded-full font-medium">
-                                            CUSTOM
-                                        </span>
-                                    </div>
-                                    
-                                    <div class="flex items-center justify-between mb-2 pr-16">
-                                        <h3 class="font-semibold text-lg text-gray-900 dark:text-gray-100">{{ $monitor->name }}</h3>
-                                        <div class="flex items-center space-x-1">
+                                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-5 border border-gray-200 dark:border-gray-600">
+                                    <!-- Header with Tag and Status -->
+                                    <div class="flex items-start justify-between mb-3">
+                                        <div class="flex-1 min-w-0">
+                                            <div class="flex items-center gap-2 mb-1">
+                                                <h3 class="font-semibold text-lg text-gray-900 dark:text-gray-100 truncate">{{ $monitor->name }}</h3>
+                                                <span class="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap">
+                                                    CUSTOM
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center gap-1.5 ml-3">
                                             @if($monitor->current_status === 'up')
-                                                <span class="w-3 h-3 bg-green-500 rounded-full"></span>
-                                                <span class="text-green-600 text-sm font-medium">UP</span>
+                                                <div class="w-2.5 h-2.5 bg-green-500 rounded-full"></div>
+                                                <span class="text-green-600 text-sm font-medium whitespace-nowrap">UP</span>
                                             @elseif($monitor->current_status === 'down')
-                                                <span class="w-3 h-3 bg-red-500 rounded-full"></span>
-                                                <span class="text-red-600 text-sm font-medium">DOWN</span>
+                                                <div class="w-2.5 h-2.5 bg-red-500 rounded-full"></div>
+                                                <span class="text-red-600 text-sm font-medium whitespace-nowrap">DOWN</span>
                                             @elseif($monitor->current_status === 'warning')
-                                                <span class="w-3 h-3 bg-yellow-500 rounded-full"></span>
-                                                <span class="text-yellow-600 text-sm font-medium">WARNING</span>
+                                                <div class="w-2.5 h-2.5 bg-yellow-500 rounded-full"></div>
+                                                <span class="text-yellow-600 text-sm font-medium whitespace-nowrap">WARNING</span>
                                             @else
-                                                <span class="w-3 h-3 bg-gray-400 rounded-full"></span>
-                                                <span class="text-gray-500 text-sm font-medium">UNKNOWN</span>
+                                                <div class="w-2.5 h-2.5 bg-gray-400 rounded-full"></div>
+                                                <span class="text-gray-500 text-sm font-medium whitespace-nowrap">UNKNOWN</span>
                                             @endif
                                         </div>
                                     </div>
                                     
-                                    <p class="text-gray-600 dark:text-gray-300 text-sm mb-2">{{ $monitor->url }}</p>
-                                    <p class="text-gray-500 dark:text-gray-400 text-xs mb-3">
-                                        Check every {{ $monitor->check_interval }} minutes • 
-                                        {{ ucfirst($monitor->type) }}
-                                        @if(!$monitor->enabled)
-                                            • <span class="text-red-500">Disabled</span>
-                                        @endif
-                                    </p>
+                                    <!-- Details -->
+                                    <div class="mb-3">
+                                        <p class="text-gray-600 dark:text-gray-300 text-sm mb-1 truncate">{{ $monitor->url }}</p>
+                                        <p class="text-gray-500 dark:text-gray-400 text-xs">
+                                            Check every {{ $monitor->check_interval }} minutes • {{ ucfirst($monitor->type) }}
+                                            @if(!$monitor->enabled)
+                                                • <span class="text-red-500 font-medium">Disabled</span>
+                                            @endif
+                                        </p>
+                                    </div>
                                     
-                                    <div class="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400 mb-3">
-                                        <span>Uptime: {{ $monitor->uptime_percentage }}%</span>
-                                        <span>Avg: {{ $monitor->average_response_time }}ms</span>
+                                    <!-- Metrics -->
+                                    <div class="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400 mb-4">
+                                        <div class="flex items-center gap-1">
+                                            <span>Uptime:</span>
+                                            <span class="font-medium text-gray-700 dark:text-gray-300">{{ $monitor->uptime_percentage }}%</span>
+                                        </div>
+                                        <div class="flex items-center gap-1">
+                                            <span>Avg:</span>
+                                            <span class="font-medium text-gray-700 dark:text-gray-300">{{ $monitor->average_response_time }}ms</span>
+                                        </div>
                                     </div>
                                     
                                     <div class="flex space-x-2">
@@ -170,17 +180,18 @@
 
                             <!-- Zabbix Hosts -->
                             @foreach($zabbixHosts as $host)
-                                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600 relative">
-                                    <!-- Zabbix Tag -->
-                                    <div class="absolute top-3 right-3">
-                                        <span class="bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 text-xs px-2 py-1 rounded-full font-medium">
-                                            ZABBIX
-                                        </span>
-                                    </div>
-                                    
-                                    <div class="flex items-center justify-between mb-2 pr-16">
-                                        <h3 class="font-semibold text-lg text-gray-900 dark:text-gray-100">{{ $host->name }}</h3>
-                                        <div class="flex items-center space-x-1">
+                                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-5 border border-gray-200 dark:border-gray-600">
+                                    <!-- Header with Tag and Status -->
+                                    <div class="flex items-start justify-between mb-3">
+                                        <div class="flex-1 min-w-0">
+                                            <div class="flex items-center gap-2 mb-1">
+                                                <h3 class="font-semibold text-lg text-gray-900 dark:text-gray-100 truncate">{{ $host->name }}</h3>
+                                                <span class="bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap">
+                                                    ZABBIX
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center gap-1.5 ml-3">
                                             @if($host->is_down)
                                                 @php
                                                     $severityColor = match ($host->severity_level) {
@@ -192,14 +203,14 @@
                                                         default => 'gray-500',
                                                     };
                                                 @endphp
-                                                <span class="w-3 h-3 bg-{{ $severityColor }} rounded-full"></span>
-                                                <span class="text-{{ $severityColor }} text-sm font-medium">{{ strtoupper($host->severity_level) }}</span>
+                                                <div class="w-2.5 h-2.5 bg-{{ $severityColor }} rounded-full"></div>
+                                                <span class="text-{{ $severityColor }} text-sm font-medium whitespace-nowrap">{{ strtoupper($host->severity_level) }}</span>
                                             @elseif($host->status === 'monitored')
-                                                <span class="w-3 h-3 bg-green-500 rounded-full"></span>
-                                                <span class="text-green-600 text-sm font-medium">OK</span>
+                                                <div class="w-2.5 h-2.5 bg-green-500 rounded-full"></div>
+                                                <span class="text-green-600 text-sm font-medium whitespace-nowrap">OK</span>
                                             @else
-                                                <span class="w-3 h-3 bg-gray-400 rounded-full"></span>
-                                                <span class="text-gray-500 text-sm font-medium">{{ strtoupper($host->status) }}</span>
+                                                <div class="w-2.5 h-2.5 bg-gray-400 rounded-full"></div>
+                                                <span class="text-gray-500 text-sm font-medium whitespace-nowrap">{{ strtoupper($host->status) }}</span>
                                             @endif
                                         </div>
                                     </div>
@@ -213,32 +224,38 @@
                                     </p>
                                     
                                     @if($host->activeEvents->count() > 0)
-                                        <div class="mb-3">
-                                            <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">Active Issues:</h4>
+                                        <div class="mb-4 p-3 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg">
+                                            <h4 class="text-sm font-medium text-red-900 dark:text-red-100 mb-2 flex items-center gap-1">
+                                                <span class="text-red-500">⚠️</span>
+                                                Active Issues ({{ $host->activeEvents->count() }})
+                                            </h4>
                                             @foreach($host->activeEvents->take(2) as $event)
-                                                <div class="flex items-center text-xs text-{{ $event->severity_color }} mb-1">
-                                                    <span class="mr-1">{{ $event->severity_icon }}</span>
-                                                    <span class="truncate">{{ $event->name }}</span>
+                                                <div class="flex items-center text-xs mb-1.5 last:mb-0">
+                                                    <span class="mr-2 text-base">{{ $event->severity_icon }}</span>
+                                                    <span class="text-gray-800 dark:text-gray-200 truncate">{{ $event->name }}</span>
                                                 </div>
                                             @endforeach
                                             @if($host->activeEvents->count() > 2)
-                                                <p class="text-xs text-gray-500 dark:text-gray-400">
-                                                    +{{ $host->activeEvents->count() - 2 }} more...
+                                                <p class="text-xs text-red-600 dark:text-red-400 mt-2 font-medium">
+                                                    +{{ $host->activeEvents->count() - 2 }} more issues
                                                 </p>
                                             @endif
                                         </div>
                                     @endif
                                     
-                                    <div class="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400 mb-3">
-                                        <span>
-                                            Notifications: 
+                                    <!-- Info Row -->
+                                    <div class="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400 mb-4">
+                                        <div class="flex items-center gap-1">
+                                            <span>Notifications:</span>
                                             @if($host->sms_notifications || $host->email_notifications)
-                                                <span class="text-green-600">ON</span>
+                                                <div class="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+                                                <span class="text-green-600 font-medium">ON</span>
                                             @else
+                                                <div class="w-1.5 h-1.5 bg-gray-400 rounded-full"></div>
                                                 <span class="text-gray-400">OFF</span>
                                             @endif
-                                        </span>
-                                        <span>
+                                        </div>
+                                        <span class="text-right">
                                             @if($host->last_synced_at)
                                                 Synced {{ $host->last_synced_at->diffForHumans() }}
                                             @else
